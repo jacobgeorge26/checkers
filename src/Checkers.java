@@ -14,7 +14,7 @@ public class Checkers {
     public Checkers() {
         Board board = new Board();
         gridSize = board.getGridSize();
-        pieces = new Piece[gridSize * gridSize/ 2];
+        pieces = new Piece[(gridSize * gridSize/ 2) + 1];
         CreateBoard();
     }
 
@@ -31,7 +31,7 @@ public class Checkers {
 
             if(!colour){
                 Piece piece = new Piece();
-                piece.setLocation((int) Math.ceil((index + 1)/2));
+                piece.setLocation((int) Math.ceil(((double)index + 1)/2));
 
                 RoundButton pieceButton = new RoundButton();
                 if(index < gridSize * 3)

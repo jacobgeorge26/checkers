@@ -2,8 +2,7 @@ package Classes;
 
 import Components.RoundButton;
 
-import javax.swing.*;
-import java.util.Queue;
+import java.util.*;
 
 public class Piece extends Tile{
     public boolean isPlayer() {
@@ -28,9 +27,8 @@ public class Piece extends Tile{
 
     protected boolean isKing = false;
 
-    public Queue<Piece> TakeSquares;
+    public List<Node> possibleMoves = new LinkedList<Node>() {};;
 
-    public Queue<Piece> MoveSquares;
 
     public RoundButton button;
 }
