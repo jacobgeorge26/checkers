@@ -9,7 +9,7 @@ public class Checkers {
     public JPanel rootPanel;
     private JPanel panel;
     private int gridSize;
-    Piece[] pieces;
+    private Piece[] pieces;
 
     public Checkers() {
         Board board = new Board();
@@ -29,16 +29,30 @@ public class Checkers {
             if (colour) cellPanel.setBackground(new Color(255, 0, 0));
             else cellPanel.setBackground(new Color(0, 0, 0));
 
-            if (((index < gridSize * 3) || (index + 1 > (gridSize * gridSize) - (3 * gridSize))) && !colour) {
-                RoundButton pieceButton = new RoundButton();
-                if (index < gridSize * 3) pieceButton.SetColour(new Color(255, 255, 255));
-                else pieceButton.SetColour(new Color(255, 0, 0));
-                cellPanel.add(pieceButton);
-
+            if(!colour){
                 Piece piece = new Piece();
                 piece.setLocation((int) Math.ceil((index + 1)/2));
-                piece.setPlayer(!(index < gridSize * 3));
+
+                RoundButton pieceButton = new RoundButton();
+                if(index < gridSize * 3)
+                {
+                    piece.setActive(true);
+                    piece.setPlayer(false);
+                }
+                else if(index + 1 > (gridSize * gridSize) - (3 * gridSize)){
+                    piece.setActive(true);
+                    piece.setPlayer(true);
+                }
+                else{
+                    piece.setActive(false);
+                }
+                piece.button = pieceButton;
+                UpdateColour(piece);
+                cellPanel.add(pieceButton);
+
+
                 pieces[piece.getLocation()] = piece;
+
             }
             panel.add(cellPanel);
         }
@@ -52,9 +66,22 @@ public class Checkers {
         frame.setVisible(true);
     }
 
-    public static void main(String[] args) {
-        new Checkers();
+    private void UpdateColour(Piece piece) {
+        if (piece.isActive() && piece.isPlayer()){
+            piece.button.SetColour(new Color(255, 0, 0));
+        }
+        else if(piece.isActive() && !piece.isPlayer()){
+            piece.button.SetColour(new Color(255, 255, 255));
+        }
+        else{
+            piece.button.SetColour(new Color(128, 128, 128));
+        }
     }
+
+    public Piece[] GetPieces(){
+        return pieces;
+    }
+
 }
 
 
