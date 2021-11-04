@@ -1,3 +1,7 @@
+import Classes.Board;
+import Classes.Piece;
+import Components.RoundButton;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -9,7 +13,7 @@ public class Checkers {
 
     public Checkers() {
         Board board = new Board();
-        gridSize = board.gridSize;
+        gridSize = board.getGridSize();
         pieces = new Piece[gridSize * gridSize/ 2];
         CreateBoard();
     }
@@ -32,9 +36,9 @@ public class Checkers {
                 cellPanel.add(pieceButton);
 
                 Piece piece = new Piece();
-                piece.location = (int) Math.ceil((index + 1)/2);
-                piece.isPlayer = !(index < gridSize * 3);
-                pieces[piece.location] = piece;
+                piece.setLocation((int) Math.ceil((index + 1)/2));
+                piece.setPlayer(!(index < gridSize * 3));
+                pieces[piece.getLocation()] = piece;
             }
             panel.add(cellPanel);
         }
