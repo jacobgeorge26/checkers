@@ -1,17 +1,22 @@
 import Classes.Board;
 import Classes.Piece;
+import Classes.Turn;
 import Components.RoundButton;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class Checkers {
     public JPanel rootPanel;
     private JPanel panel;
     private int gridSize;
     private Piece[] pieces;
+    protected GamePlay game;
 
-    public Checkers() {
+    public Checkers(GamePlay _game) {
+        game = _game;
         Board board = new Board();
         gridSize = board.getGridSize();
         pieces = new Piece[(gridSize * gridSize/ 2) + 1];
@@ -26,7 +31,7 @@ public class Checkers {
             //setup panel for grid colour
             JPanel cellPanel = new JPanel();
             if (index % gridSize != 0) colour = !colour;
-            if (colour) cellPanel.setBackground(new Color(255, 0, 0));
+            if (colour) cellPanel.setBackground(new Color(255, 255, 255));
             else cellPanel.setBackground(new Color(0, 0, 0));
 
             if(!colour){
@@ -45,7 +50,16 @@ public class Checkers {
                 }
                 else{
                     piece.setActive(false);
+                    piece.setPlayer(false);
                 }
+                //setup event handler
+                pieceButton.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        game.pieceClicked(new Turn(piece));
+                    }
+                });
+
                 piece.button = pieceButton;
                 UpdateColour(piece);
                 cellPanel.add(pieceButton);
@@ -66,15 +80,21 @@ public class Checkers {
         frame.setVisible(true);
     }
 
-    private void UpdateColour(Piece piece) {
-        if (piece.isActive() && piece.isPlayer()){
+    //TODO: move to GamePlay
+
+
+    public void UpdateColour(Piece piece) {
+        if(piece.isActive() && piece.isPlayer() && game.selectedPiece == piece){
+            piece.button.SetColour(new Color(125, 0, 0));
+        }
+        else if (piece.isActive() && piece.isPlayer()){
             piece.button.SetColour(new Color(255, 0, 0));
         }
         else if(piece.isActive() && !piece.isPlayer()){
             piece.button.SetColour(new Color(255, 255, 255));
         }
         else{
-            piece.button.SetColour(new Color(128, 128, 128));
+            piece.button.SetColour(new Color(0, 0, 0));
         }
     }
 
