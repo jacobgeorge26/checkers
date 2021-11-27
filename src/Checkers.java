@@ -56,7 +56,7 @@ public class Checkers {
                 pieceButton.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        game.pieceClicked(new Turn(piece));
+                        game.pieceClicked(piece);
                     }
                 });
 
@@ -84,7 +84,7 @@ public class Checkers {
 
 
     public void UpdateColour(Piece piece) {
-        if(piece.isActive() && piece.isPlayer() && game.selectedPiece == piece){
+        if(piece.isActive() && piece.isPlayer() && piece.isSelected){
             piece.button.SetColour(new Color(125, 0, 0));
         }
         else if (piece.isActive() && piece.isPlayer()){

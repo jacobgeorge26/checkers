@@ -25,10 +25,11 @@ public class Piece extends Tile{
 
     protected boolean isActive;
 
-    protected boolean isKing = false;
+    public boolean isKing = false;
 
     public List<Node> possibleMoves = new LinkedList<Node>() {};;
 
+    public boolean isSelected = false;
 
     public RoundButton button;
 }

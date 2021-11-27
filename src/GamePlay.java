@@ -3,10 +3,7 @@ import Classes.Node;
 import Classes.Piece;
 import Classes.Turn;
 
-import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -15,28 +12,31 @@ public class GamePlay {
 
     public Piece[] allPieces;
 
-    public boolean playerTurn = true;
+    public boolean isPlayerTurn = true;
 
     public boolean gameWon = false;
 
-    public Piece selectedPiece;
+    public Turn playerTurn = new Turn();
+
+    private List<Turn> possibleTurns;
 
     int difficulty = 4;
 
 
 
-    public void pieceClicked(Turn turn) {
+    public void pieceClicked(Piece piece) {
         //is it the player's turn?
-        if(!playerTurn) {
+        if(!isPlayerTurn) {
             //TODO: warning that it is not player's turn
             return;
         }
-        Piece piece = turn.piece;
         //are they clicking the first button?
-        if (selectedPiece == null){
+        if (playerTurn.origin == null){
             if(piece.isPlayer() && piece.isActive()) {
-                selectedPiece = piece;
+                playerTurn.origin = piece;
+                piece.isSelected = true;
                 checkers.UpdateColour(piece);
+                GetPossibleTurns(piece);
             }
             else{
                 //TODO: warning to select a valid player's piece
@@ -45,29 +45,31 @@ public class GamePlay {
 
 
         //are they clicking the second button?
-        if(selectedPiece != null && !piece.isActive()){
-            if(ValidateMove(selectedPiece, piece)){
+        if(playerTurn.origin != null && !piece.isActive()){
+            playerTurn.piece = piece;
+            if(ValidateMove(playerTurn.origin, piece)){
+
                 //move player piece
                 piece.setPlayer(true);
                 piece.setActive(true);
                 checkers.UpdateColour(piece);
 
-                selectedPiece.setPlayer(false);
-                selectedPiece.setActive(false);
-                ClearSelectedPiece();
+                playerTurn.origin.setPlayer(false);
+                playerTurn.origin.setActive(false);
+                ClearSelectedPiece(playerTurn);
 
                 //clear any captured pieces
-                turn.capturedPieces.forEach(p -> {
+                playerTurn.capturedPieces.forEach(p -> {
                     p.setActive(false);
                     checkers.UpdateColour(p);
                 });
 
-                playerTurn = !playerTurn;
+                isPlayerTurn = !isPlayerTurn;
                 AITurn();
             }
             else{
                 //TODO: warning that this move is invalid
-                ClearSelectedPiece();
+                ClearSelectedPiece(playerTurn);
             }
         }
         else{
@@ -75,6 +77,47 @@ public class GamePlay {
         }
     }
 
+    private void GetPossibleTurns(Piece piece) {
+        possibleTurns = new ArrayList<Turn>();
+        Turn possTurn = new Turn();
+        possTurn.origin = piece;
+        Search(piece, possTurn);
+    }
+
+    public void Search(Piece p, List<Turn> turn) {
+        turn.explored.add(p.getLocation());
+        for (Node n : p.possibleMoves) {
+            if (IsValidDirection(n, p)) {
+                Piece possP = allPieces[n.pieceLocation];
+                if (!possP.isActive()) {
+                    Search(possP, turn);
+                }
+                if (possP.isPlayer() != isPlayerTurn && possP.isActive()) {
+                    Node[] nextNs = (Node[]) possP.possibleMoves.stream().filter(x -> x.direction == n.direction).toArray();
+                    Node nextN = nextNs.length > 0 ? nextNs[0] : null;
+                    if (nextN != null) {
+                        Piece nextP = allPieces[nextN.pieceLocation];
+                        if (!nextP.isActive()) {
+                            Search(nextP, turn);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean IsValidDirection(Node n, Piece p){
+        if (isPlayerTurn && ((n.direction == Direction.UpLeft || n.direction == Direction.UpRight) || p.isKing)) return true;
+        else if(!isPlayerTurn && ((n.direction == Direction.DownLeft || n.direction == Direction.DownRight) || p.isKing)) return true;
+        else return false;
+    }
+
+
+    //for high - is it blocked?
+    //can it move in that direction - look at king
+    //would that move make it a king? bump score
+    //would that move make it vulnerable? reduce score
+    //is this piece about to be taken?
     private void AITurn(){
         //pieces with a player piece adjacent
         List<Piece> highPriority = new ArrayList<>();
@@ -95,12 +138,6 @@ public class GamePlay {
         }
     }
 
-        //for high - is it blocked?
-        //can it move in that direction - look at king
-        //would that move make it a king? bump score
-        //would that move make it vulnerable? reduce score
-        //is this piece about to be taken?
-
         Turn bestTurn = new Turn();
         for(Piece p : highPriority){
             Turn turn = new Turn();
@@ -108,6 +145,22 @@ public class GamePlay {
             bestTurn = turn.score > bestTurn.score ? turn : bestTurn;
             System.out.println("Piece " + p.getLocation() + " has score " + turn.score);
         }
+        if(bestTurn.score == 0){
+            for(Piece p : lowPriority){
+                Turn turn = new Turn();
+                turn.score = Minimax(turn, p, difficulty, true);
+                bestTurn = turn.score > bestTurn.score ? turn : bestTurn;
+                System.out.println("Piece " + p.getLocation() + " has score " + turn.score);
+            }
+        }
+        if(bestTurn.score == 0){
+            //TODO: warning - no turns possible - switch player
+        }
+        CompleteTurn(bestTurn);
+    }
+
+    private void CompleteTurn(Turn bestTurn) {
+
     }
 
     private int Minimax(Turn turn, Piece piece, int depth, boolean isMin) {
@@ -155,9 +208,10 @@ public class GamePlay {
     }
 
 
-    private void ClearSelectedPiece(){
-        Piece needsClearing = selectedPiece;
-        selectedPiece = null;
+    private void ClearSelectedPiece(Turn turn){
+        Piece needsClearing = turn.origin;
+        needsClearing.isSelected = false;
+        turn.origin = null;
         checkers.UpdateColour(needsClearing);
     }
 }
