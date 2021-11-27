@@ -9,15 +9,14 @@ import java.util.ArrayList;
 
 public class Controller {
     private GamePlay game = new GamePlay();
-
     public static void main(String[] args) {
         new Controller();
     }
 
     public Controller() {
         //create board - setup pieces
-        Checkers checkers = new Checkers(game);
-        game.checkers = checkers;
+        UI checkers = new UI(game);
+        game.ui = checkers;
         game.allPieces = checkers.GetPieces();
         CreateTree();
     }

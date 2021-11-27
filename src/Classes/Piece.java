@@ -31,5 +31,7 @@ public class Piece extends Tile{
 
     public boolean isSelected = false;
 
+    public boolean isOption = false;
+
     public RoundButton button;
 }

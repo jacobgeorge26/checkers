@@ -18,8 +18,4 @@ public class Turn {
 
     public int score = 0;
 
-    public Turn(){
-
-    }
-
 }

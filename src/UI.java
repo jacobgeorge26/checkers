@@ -8,14 +8,14 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class Checkers {
+public class UI {
     public JPanel rootPanel;
     private JPanel panel;
     private int gridSize;
     private Piece[] pieces;
     protected GamePlay game;
 
-    public Checkers(GamePlay _game) {
+    public UI(GamePlay _game) {
         game = _game;
         Board board = new Board();
         gridSize = board.getGridSize();
@@ -84,7 +84,11 @@ public class Checkers {
 
 
     public void UpdateColour(Piece piece) {
-        if(piece.isActive() && piece.isPlayer() && piece.isSelected){
+        if(piece.isOption)
+        {
+            piece.button.SetColour(new Color(0, 125, 0));
+        }
+        else if(piece.isActive() && piece.isPlayer() && piece.isSelected){
             piece.button.SetColour(new Color(125, 0, 0));
         }
         else if (piece.isActive() && piece.isPlayer()){
