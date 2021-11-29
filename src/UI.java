@@ -1,6 +1,6 @@
 import Classes.Board;
+import Classes.Difficulty;
 import Classes.Piece;
-import Classes.Turn;
 import Components.RoundButton;
 
 import javax.swing.*;
@@ -8,12 +8,13 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class UI {
+public class UI implements ActionListener {
     public JPanel rootPanel;
     private JPanel panel;
     private int gridSize;
     private Piece[] pieces;
     protected GamePlay game;
+    private JCheckBoxMenuItem[] aiDiffs = new JCheckBoxMenuItem[3];
 
     public UI(GamePlay _game) {
         game = _game;
@@ -25,6 +26,7 @@ public class UI {
 
     private void CreateBoard() {
         JFrame frame = new JFrame();
+        SetupOptions(frame);
         panel = new JPanel(new GridLayout(gridSize, gridSize));
         boolean colour = true;
         for (int index = 0; index < gridSize * gridSize; index++) {
@@ -80,7 +82,27 @@ public class UI {
         frame.setVisible(true);
     }
 
-    //TODO: move to GamePlay
+    private void SetupOptions(JFrame frame) {
+        JMenuBar optionMenu = new JMenuBar();
+        JMenu aiDifficulty = new JMenu("AI Difficulty");
+        aiDifficulty.setPreferredSize(new Dimension(100, 20));
+
+        JCheckBoxMenuItem easy = new JCheckBoxMenuItem("Easy");
+        easy.addActionListener(this);
+        JCheckBoxMenuItem med = new JCheckBoxMenuItem("Medium");
+        med.addActionListener(this);
+        JCheckBoxMenuItem hard = new JCheckBoxMenuItem("Hard");
+        hard.addActionListener(this);
+        aiDiffs = new JCheckBoxMenuItem[]{easy, med, hard};
+        med.doClick();
+
+        aiDifficulty.add(easy);
+        aiDifficulty.add(med);
+        aiDifficulty.add(hard);
+
+        optionMenu.add(aiDifficulty);
+        frame.setJMenuBar(optionMenu);
+    }
 
 
     public void UpdateColour(Piece piece) {
@@ -106,6 +128,28 @@ public class UI {
         return pieces;
     }
 
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Object source = e.getSource();
+
+        //AI difficulty options
+        if(source == aiDiffs[0]){ //easy
+            aiDiffs[0].setState(true);
+            aiDiffs[1].setState(false);
+            aiDiffs[2].setState(false);
+            game.UpdateDifficulty(Difficulty.Easy);
+        }
+        else if(source == aiDiffs[1]){
+            aiDiffs[0].setState(false);
+            aiDiffs[1].setState(true);
+            aiDiffs[2].setState(false);
+        }
+        else if(source == aiDiffs[2]){
+            aiDiffs[0].setState(false);
+            aiDiffs[1].setState(false);
+            aiDiffs[2].setState(true);
+        }
+    }
 }
 
 
