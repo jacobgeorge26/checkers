@@ -2,6 +2,7 @@ import Classes.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Filter;
 import java.util.stream.Collectors;
 
 public class GamePlay {
@@ -19,12 +20,12 @@ public class GamePlay {
 
     private List<Piece> possibleMoves;
 
-    private int aiDepth;
+    private int aiDepth = 3;
 
 
 
     public void pieceClicked(Piece piece) {
-        //SetupTest();
+        SetupTest();
         //is it the player's turn?
         if(!isPlayerTurn) {
             //TODO: warning that it is not player's turn
@@ -181,7 +182,7 @@ public class GamePlay {
         for(Piece p : highPriority){
             Turn turn = new Turn();
             turn.origin = p;
-            turn.score = Minimax(turn, p, aiDepth, true);
+            turn.score = Minimax(turn, p, aiDepth, false, MoveType.Both);
             bestTurn = turn.score > bestTurn.score ? turn : bestTurn;
             System.out.println("Piece " + p.getLocation() + " has score " + turn.score);
         }
@@ -189,7 +190,7 @@ public class GamePlay {
             for(Piece p : lowPriority){
                 Turn turn = new Turn();
                 turn.origin = p;
-                turn.score = Minimax(turn, p, aiDepth, true);
+                turn.score = Minimax(turn, p, aiDepth, false, MoveType.Both);
                 bestTurn = turn.score > bestTurn.score ? turn : bestTurn;
                 System.out.println("Piece " + p.getLocation() + " has score " + turn.score);
             }
@@ -226,37 +227,39 @@ public class GamePlay {
         isPlayerTurn = !isPlayerTurn;
     }
 
-    private int Minimax(Turn turn, Piece piece, int depth, boolean isMin) {
-        List<Piece> unexplored = FilterMoves(piece, piece.possibleMoves, MoveType.Both);
-        unexplored.removeIf(p -> turn.explored.contains(p.getLocation()));
+    private int Minimax(Turn turn, Piece piece, int depth, boolean isMin, MoveType moveType) {
+        //if allowed, get possible advancing moves
+        List<Piece> unexploredA = (moveType == MoveType.Advance || moveType == MoveType.Both)
+                ? FilterMoves(piece, piece.possibleMoves, MoveType.Advance) : new ArrayList<Piece>();
+        //remove those already explored - for advance only as jumps can return to the same place
+        unexploredA.removeIf(p -> turn.explored.contains(p.getLocation()));
+        //if allowed, get possible jumping moves
+        List<Piece> unexploredJ = (moveType == MoveType.Jump || moveType == MoveType.Both)
+                ? FilterMoves(piece, piece.possibleMoves, MoveType.Jump) : new ArrayList<Piece>();
+
         turn.explored.add(piece.getLocation());
-        if (depth == 0 || unexplored.isEmpty()){
-            return 1;
+        if (depth == 0 || (unexploredA.isEmpty() && unexploredJ.isEmpty())){
+            turn.piece = piece;
+            return turn.capturedPieces.isEmpty()
+                    ? moveType == MoveType.Both ? 0 : 1
+                    : turn.capturedPieces.size();
         }
-        if (!isMin){
+
+        if (isMin || (!isMin && unexploredJ.isEmpty())){
             int bestValue = -1000;
-            for (int i = 0; i < unexplored.size(); i++){
-                Piece nextPiece = unexplored.get(i);
-                //System.out.println("Checking MAX " + nextNode.pieceLocation);
-                turn.piece = piece;
-                int eval = Minimax(turn, nextPiece, depth - 1, !isMin);
+            for (int i = 0; i < unexploredA.size(); i++){
+                Piece nextPiece = unexploredA.get(i);
+                int eval = Minimax(turn, nextPiece, depth - 1, !isMin, MoveType.Neither);
                 bestValue = Math.max(bestValue, eval);
-
-
-               // actualPiece.button.SetColour(new Color(0, 255, 0));
             }
             return bestValue;
         }
         else{
             int bestValue = 1000;
-            for(int i = 0; i < unexplored.size(); i++){
-                Piece nextPiece = unexplored.get(i);
-                //System.out.println("Checking MIN " + nextNode.pieceLocation);
-                turn.piece = piece;
-                int eval = Minimax(turn, nextPiece, depth - 1, !isMin);
+            for(int i = 0; i < unexploredJ.size(); i++){
+                Piece nextPiece = unexploredJ.get(i);
+                int eval = Minimax(turn, nextPiece, depth - 1, !isMin, MoveType.Jump);
                 bestValue = Math.min(bestValue, eval);
-
-               // actualPiece.button.SetColour(new Color(0, 0, 255));
             }
             return bestValue;
         }
