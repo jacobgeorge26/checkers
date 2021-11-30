@@ -2,8 +2,7 @@ import Classes.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Filter;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 public class GamePlay {
     public UI ui;
@@ -25,7 +24,7 @@ public class GamePlay {
 
 
     public void pieceClicked(Piece piece) {
-        SetupTest();
+        //SetupTest();
         //is it the player's turn?
         if(!isPlayerTurn) {
             //TODO: warning that it is not player's turn
@@ -62,7 +61,7 @@ public class GamePlay {
         //are they clicking the second button?
         if(playerTurn.origin != null && !piece.isActive()){
             playerTurn.piece = piece;
-            if(ValidateMove(playerTurn.origin, piece)){
+            if(possibleMoves.contains(playerTurn.piece)){
                 CompleteTurn(playerTurn);
                 AITurn();
             }
@@ -96,8 +95,9 @@ public class GamePlay {
         }
 
         if(legalMoveType == MoveType.Jump || legalMoveType == MoveType.Both){
-            List<Piece> jumpMoves = FilterMoves(piece, piece.possibleMoves, MoveType.Jump);
-            for(Piece p : jumpMoves){
+            List<Node> jumpMoves = FilterMoves(piece, piece.possibleMoves, MoveType.Jump);
+            for(Node n : jumpMoves){
+                Piece p = allPieces[n.pieceLocation];
                 if(!moves.contains(p) && p != source){
                     moves.add(p);
                     p.isOption = true;
@@ -109,8 +109,9 @@ public class GamePlay {
             }
         }
         if(legalMoveType == MoveType.Advance || legalMoveType == MoveType.Both){
-            List<Piece> advanceMoves = FilterMoves(piece, piece.possibleMoves, MoveType.Advance);
-            for (Piece p : advanceMoves){
+            List<Node> advanceMoves = FilterMoves(piece, piece.possibleMoves, MoveType.Advance);
+            for (Node n : advanceMoves){
+                Piece p = allPieces[n.pieceLocation];
                 if(!moves.contains(p) && p != source){
                     moves.add(p);
                     p.isOption = true;
@@ -123,21 +124,21 @@ public class GamePlay {
         }
     }
 
-    private List<Piece> FilterMoves(Piece currentPiece, List<Node> possibleMoves, MoveType moveType) {
-        List<Piece> filteredMoves = new ArrayList<Piece>();
-        for (Node n : possibleMoves) {
-            if (IsValidDirection(n, currentPiece)) {
-                Piece possP = allPieces[n.pieceLocation];
+    private List<Node> FilterMoves(Piece currentPiece, List<Node> possibleMoves, MoveType moveType) {
+        List<Node> filteredMoves = new ArrayList<Node>();
+        for (Node possN : possibleMoves) {
+            if (IsValidDirection(possN, currentPiece)) {
+                Piece possP = allPieces[possN.pieceLocation];
                 if ((moveType == MoveType.Advance || moveType == MoveType.Both) && !possP.isActive()) {
-                    filteredMoves.add(possP);
+                    filteredMoves.add(possN);
                 }
                 if ((moveType == MoveType.Jump || moveType == MoveType.Both) && possP.isPlayer() != isPlayerTurn && possP.isActive()) {
-                    Object[] nextNs = possP.possibleMoves.stream().filter(x -> x.direction == n.direction).toArray();
+                    Object[] nextNs = possP.possibleMoves.stream().filter(x -> x.direction == possN.direction).toArray();
                     Node nextN = nextNs.length > 0 ? (Node) nextNs[0] : null;
                     if (nextN != null) {
                         Piece nextP = allPieces[nextN.pieceLocation];
                         if (!nextP.isActive()) {
-                            filteredMoves.add(nextP);
+                            filteredMoves.add(nextN);
                         }
                     }
                 }
@@ -219,23 +220,18 @@ public class GamePlay {
             ui.UpdateColour(p);
         });
 
-        for(Piece p : possibleMoves){
-            p.isOption = false;
-            ui.UpdateColour(p);
-        }
-
         isPlayerTurn = !isPlayerTurn;
     }
 
     private int Minimax(Turn turn, Piece piece, int depth, boolean isMin, MoveType moveType) {
         //if allowed, get possible advancing moves
-        List<Piece> unexploredA = (moveType == MoveType.Advance || moveType == MoveType.Both)
-                ? FilterMoves(piece, piece.possibleMoves, MoveType.Advance) : new ArrayList<Piece>();
+        List<Node> unexploredA = (moveType == MoveType.Advance || moveType == MoveType.Both)
+                ? FilterMoves(piece, piece.possibleMoves, MoveType.Advance) : new ArrayList<Node>();
         //remove those already explored - for advance only as jumps can return to the same place
-        unexploredA.removeIf(p -> turn.explored.contains(p.getLocation()));
+        unexploredA.removeIf(n -> turn.explored.contains(n.pieceLocation));
         //if allowed, get possible jumping moves
-        List<Piece> unexploredJ = (moveType == MoveType.Jump || moveType == MoveType.Both)
-                ? FilterMoves(piece, piece.possibleMoves, MoveType.Jump) : new ArrayList<Piece>();
+        List<Node> unexploredJ = (moveType == MoveType.Jump || moveType == MoveType.Both)
+                ? FilterMoves(piece, piece.possibleMoves, MoveType.Jump) : new ArrayList<Node>();
 
         turn.explored.add(piece.getLocation());
         if (depth == 0 || (unexploredA.isEmpty() && unexploredJ.isEmpty())){
@@ -245,24 +241,33 @@ public class GamePlay {
                     : turn.capturedPieces.size();
         }
 
-        if (isMin || (!isMin && unexploredJ.isEmpty())){
-            int bestValue = -1000;
+        int bestValue;
+        if (isMin || unexploredJ.isEmpty()){
+            bestValue = -1000;
             for (int i = 0; i < unexploredA.size(); i++){
-                Piece nextPiece = unexploredA.get(i);
+                Piece nextPiece = allPieces[unexploredA.get(i).pieceLocation];
                 int eval = Minimax(turn, nextPiece, depth - 1, !isMin, MoveType.Neither);
                 bestValue = Math.max(bestValue, eval);
             }
-            return bestValue;
         }
         else{
-            int bestValue = 1000;
+            bestValue = 1000;
             for(int i = 0; i < unexploredJ.size(); i++){
-                Piece nextPiece = unexploredJ.get(i);
-                int eval = Minimax(turn, nextPiece, depth - 1, !isMin, MoveType.Jump);
-                bestValue = Math.min(bestValue, eval);
+                Node nextNode = unexploredJ.get(i);
+                Piece nextPiece = allPieces[nextNode.pieceLocation];
+                Optional<Node> capturedNode = piece.possibleMoves.stream()
+                        .filter(p -> p.direction == nextNode.direction).findFirst();
+                if(!capturedNode.isPresent()){
+                    //TODO: error
+                }
+                else{
+                    turn.capturedPieces.add(allPieces[capturedNode.get().pieceLocation]);
+                    int eval = Minimax(turn, nextPiece, depth - 1, !isMin, MoveType.Jump);
+                    bestValue = Math.min(bestValue, eval);
+                }
             }
-            return bestValue;
         }
+        return bestValue;
 
     }
 
@@ -278,6 +283,11 @@ public class GamePlay {
         needsClearing.isSelected = false;
         turn.origin = null;
         ui.UpdateColour(needsClearing);
+
+        for(Piece p : possibleMoves){
+            p.isOption = false;
+            ui.UpdateColour(p);
+        }
     }
 
     //TODO: add other elements to difficulty options
