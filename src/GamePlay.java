@@ -1,8 +1,10 @@
 import Classes.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class GamePlay {
     public UI ui;
@@ -15,9 +17,10 @@ public class GamePlay {
 
     public boolean gameWon = false;
 
+    //TODO: fix constructor and pass in a Turn from UI instead of a Piece
     public Turn playerTurn = new Turn();
 
-    private List<Piece> possibleMoves;
+    private List<Turn> possibleMoves;
 
     private int aiDepth = 3;
 
@@ -32,14 +35,14 @@ public class GamePlay {
         }
         //are they clicking the first button?
         if (playerTurn.origin == null){
+            possibleMoves = new ArrayList<Turn>();
             if(piece.isPlayer() && piece.isActive()) {
                 playerTurn.origin = piece;
                 piece.isSelected = true;
                 ui.UpdateColour(piece);
-                possibleMoves = new ArrayList<Piece>();
-                Search(piece, piece, possibleMoves, MoveType.Both, isPlayerTurn);
-                for(Piece p : possibleMoves){
-                    p.isOption = true;
+                Search(piece, piece, MoveType.Both, isPlayerTurn, possibleMoves, null);
+                for(Turn t : possibleMoves){
+                    t.piece.isOption = true;
                 }
             }
             else{
@@ -49,25 +52,33 @@ public class GamePlay {
         else if(playerTurn.origin != null && piece == playerTurn.origin){
             //piece has been clicked again, deselect
             //clear options
-            for(Piece p : possibleMoves){
-                p.isOption = false;
-                ui.UpdateColour(p);
+            for(Turn t : possibleMoves){
+                t.piece.isOption = false;
+                ui.UpdateColour(t.piece);
             }
             //clear selection
             ClearSelectedPiece(playerTurn);
+            ClearOptions(possibleMoves);
         }
 
 
         //are they clicking the second button?
         if(playerTurn.origin != null && !piece.isActive()){
-            playerTurn.piece = piece;
-            if(possibleMoves.contains(playerTurn.piece)){
-                CompleteTurn(playerTurn);
-                AITurn();
-            }
-            else{
-                //TODO: warning that this move is invalid
+            List<Turn> matchingTurns = possibleMoves.stream().filter(t -> t.piece.getLocation() == piece.getLocation()).collect(Collectors.toList());
+            //no matching turns
+            if(matchingTurns.size() == 0){//TODO: warning that this move in invalid
                 ClearSelectedPiece(playerTurn);
+                ClearOptions(possibleMoves);
+            }
+            else {
+                playerTurn = matchingTurns.get(0);
+                //if there are multiple matching turns then use the most beneficial one for the player
+                for(Turn t : matchingTurns) {
+                    playerTurn = t.capturedPieces.size() > playerTurn.capturedPieces.size() ? t : playerTurn;
+                }
+                CompleteTurn(playerTurn);
+                ClearOptions(possibleMoves);
+                AITurn();
             }
         }
         else{
@@ -84,44 +95,44 @@ public class GamePlay {
     }
 
     //TODO: what if it reaches the edge and becomes a king halfway through?
-    public void Search(Piece source, Piece piece, List<Piece> moves, MoveType legalMoveType, boolean updateColour) {
-        if(legalMoveType == MoveType.Neither && piece != source){
-            moves.add(piece);
-            piece.isOption = true;
-            if(updateColour){
-                ui.UpdateColour(piece);
-            }
-            return;
-        }
-
+    public List<Turn> Search(Piece source, Piece piece, MoveType legalMoveType, boolean updateColour, List<Turn> moves, Turn existingTurn) {
         if(legalMoveType == MoveType.Jump || legalMoveType == MoveType.Both){
             List<Node> jumpMoves = FilterMoves(piece, piece.possibleMoves, MoveType.Jump);
-            for(Node n : jumpMoves){
-                Piece p = allPieces[n.pieceLocation];
-                if(!moves.contains(p) && p != source){
-                    moves.add(p);
-                    p.isOption = true;
+            for(Node nextNode : jumpMoves){
+                Turn newTurn = existingTurn == null ? new Turn(source) : existingTurn;
+                Piece nextPiece = allPieces[nextNode.pieceLocation];
+                if(nextPiece != source){ //TODO: this is technically allowed - code for this situation
+                    nextPiece.isOption = true;
                     if(updateColour){
-                        ui.UpdateColour(p);
+                        ui.UpdateColour(nextPiece);
                     }
-                    Search(source, p, moves, MoveType.Jump, updateColour);
+                    moves.add(newTurn);
+                    newTurn = moves.get(moves.size() - 1); //get the duplicate
+                    newTurn.piece = nextPiece;
+                    Optional<Node> capturedNode = piece.possibleMoves.stream()
+                            .filter(p -> p.direction == nextNode.direction).findFirst();
+                    newTurn.capturedPieces.add(allPieces[capturedNode.get().pieceLocation]);
+
+                    Search(source, nextPiece, MoveType.Jump, updateColour, moves, newTurn);
                 }
             }
         }
         if(legalMoveType == MoveType.Advance || legalMoveType == MoveType.Both){
             List<Node> advanceMoves = FilterMoves(piece, piece.possibleMoves, MoveType.Advance);
-            for (Node n : advanceMoves){
-                Piece p = allPieces[n.pieceLocation];
-                if(!moves.contains(p) && p != source){
-                    moves.add(p);
-                    p.isOption = true;
+            for (Node nextNode : advanceMoves){
+                Piece nextPiece = allPieces[nextNode.pieceLocation];
+                if(nextPiece != source){
+                    Turn newTurn = new Turn(source);
+                    newTurn.piece = nextPiece;
+                    moves.add(newTurn);
+                    nextPiece.isOption = true;
                     if(updateColour){
-                        ui.UpdateColour(p);
+                        ui.UpdateColour(nextPiece);
                     }
-                    Search(source, p, moves, MoveType.Neither, updateColour);
                 }
             }
         }
+        return moves;
     }
 
     private List<Node> FilterMoves(Piece currentPiece, List<Node> possibleMoves, MoveType moveType) {
@@ -220,7 +231,25 @@ public class GamePlay {
             ui.UpdateColour(p);
         });
 
+        boolean isWon = IsGameWon();
+        if(isWon){
+            String message = isPlayerTurn ? " the player. Well done!" : " the AI. Good try!";
+            System.out.println("The winner is " + message);
+            //TODO: reset game?
+        }
         isPlayerTurn = !isPlayerTurn;
+    }
+
+    private boolean IsGameWon() {
+        boolean isWon = true;
+        for(Piece p : allPieces){
+            if(p == null){
+                continue;
+            }
+            isWon = !p.isActive() && p.isPlayer() != isPlayerTurn;
+            if(!isWon) return false;
+        }
+        return isWon;
     }
 
     private int Minimax(Turn turn, Piece piece, int depth, boolean isMin, MoveType moveType) {
@@ -283,10 +312,12 @@ public class GamePlay {
         needsClearing.isSelected = false;
         turn.origin = null;
         ui.UpdateColour(needsClearing);
+    }
 
-        for(Piece p : possibleMoves){
-            p.isOption = false;
-            ui.UpdateColour(p);
+    private void ClearOptions(List<Turn> possibleMoves){
+        for(Turn t : possibleMoves){
+            t.piece.isOption = false;
+            ui.UpdateColour(t.piece);
         }
     }
 

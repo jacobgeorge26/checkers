@@ -18,4 +18,11 @@ public class Turn {
 
     public int score = 0;
 
+    public Turn(Piece _origin) {
+        origin = _origin;
+    }
+
+    public Turn(){
+
+    }
 }
