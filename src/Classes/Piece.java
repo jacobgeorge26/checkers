@@ -5,25 +5,9 @@ import Components.RoundButton;
 import java.util.*;
 
 public class Piece extends Tile{
-    public boolean isPlayer() {
-        return isPlayer;
-    }
+    public boolean isPlayer;
 
-    public void setPlayer(boolean player) {
-        isPlayer = player;
-    }
-
-    protected boolean isPlayer;
-
-    public boolean isActive() {
-        return isActive;
-    }
-
-    public void setActive(boolean active) {
-        isActive = active;
-    }
-
-    protected boolean isActive;
+    public boolean isActive;
 
     public boolean isKing = false;
 

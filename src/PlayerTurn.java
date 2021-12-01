@@ -24,7 +24,7 @@ public class PlayerTurn extends TurnHelpers {
 
     public void ShowOptions(){
         possibleMoves = new ArrayList<Turn>();
-        if(turn.origin.isPlayer() && turn.origin.isActive()) {
+        if(turn.origin.isPlayer && turn.origin.isActive) {
             turn.origin.isSelected = true;
             ui.UpdateColour(turn.origin);
             Search(turn.origin, MoveType.Both, possibleMoves, null);

@@ -29,15 +29,15 @@ public class AITurn extends TurnHelpers{
         //pieces with an empty space adjacent
         List<Piece> lowPriority = new ArrayList<>();
         for(Piece p : allPieces){
-            if(p == null || p.isPlayer() || !p.isActive()){
+            if(p == null || p.isPlayer || !p.isActive){
                 continue;
             }
             for(Node n : p.possibleMoves){
                 Piece poss = allPieces[n.pieceLocation];
-                if(poss.isPlayer() && poss.isActive() && !highPriority.contains(p)){
+                if(poss.isPlayer && poss.isActive && !highPriority.contains(p)){
                     highPriority.add(p);
                 }
-                if(!poss.isActive() && !lowPriority.contains(p)){
+                if(!poss.isActive && !lowPriority.contains(p)){
                     lowPriority.add(p);
                 }
             }

@@ -42,16 +42,16 @@ public class UI implements ActionListener {
                 RoundButton pieceButton = new RoundButton();
                 if(index < gridSize * 3)
                 {
-                    piece.setActive(true);
-                    piece.setPlayer(false);
+                    piece.isActive = true;
+                    piece.isPlayer = false;
                 }
                 else if(index + 1 > (gridSize * gridSize) - (3 * gridSize)){
-                    piece.setActive(true);
-                    piece.setPlayer(true);
+                    piece.isActive = true;
+                    piece.isPlayer = true;
                 }
                 else{
-                    piece.setActive(false);
-                    piece.setPlayer(false);
+                    piece.isActive = false;
+                    piece.isPlayer = false;
                 }
                 //setup event handler
                 pieceButton.addActionListener(new ActionListener() {
@@ -109,13 +109,13 @@ public class UI implements ActionListener {
         {
             piece.button.SetColour(new Color(0, 125, 0));
         }
-        else if(piece.isActive() && piece.isPlayer() && piece.isSelected){
+        else if(piece.isActive && piece.isPlayer && piece.isSelected){
             piece.button.SetColour(new Color(125, 0, 0));
         }
-        else if (piece.isActive() && piece.isPlayer()){
+        else if (piece.isActive && piece.isPlayer){
             piece.button.SetColour(new Color(255, 0, 0));
         }
-        else if(piece.isActive() && !piece.isPlayer()){
+        else if(piece.isActive && !piece.isPlayer){
             piece.button.SetColour(new Color(255, 255, 255));
         }
         else{

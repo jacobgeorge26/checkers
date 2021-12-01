@@ -41,7 +41,7 @@ public class GamePlay {
         }
 
         //are they clicking the second button?
-        if(playerTurn != null && !piece.isActive()){
+        if(playerTurn != null && !piece.isActive){
             playerTurn.ChooseMove(piece);
             playerTurn = null;
             aiTurn = new AITurn(ui, allPieces);

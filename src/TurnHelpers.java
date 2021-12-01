@@ -18,15 +18,15 @@ public class TurnHelpers {
         for (Node possN : possibleMoves) {
             if (IsValidDirection(possN, currentPiece)) {
                 Piece possP = allPieces[possN.pieceLocation];
-                if ((moveType == MoveType.Advance || moveType == MoveType.Both) && !possP.isActive()) {
+                if ((moveType == MoveType.Advance || moveType == MoveType.Both) && !possP.isActive) {
                     filteredMoves.add(possN);
                 }
-                if ((moveType == MoveType.Jump || moveType == MoveType.Both) && possP.isPlayer() != isPlayerTurn && possP.isActive()) {
+                if ((moveType == MoveType.Jump || moveType == MoveType.Both) && possP.isPlayer != isPlayerTurn && possP.isActive) {
                     Object[] nextNs = possP.possibleMoves.stream().filter(x -> x.direction == possN.direction).toArray();
                     Node nextN = nextNs.length > 0 ? (Node) nextNs[0] : null;
                     if (nextN != null) {
                         Piece nextP = allPieces[nextN.pieceLocation];
-                        if (!nextP.isActive()) {
+                        if (!nextP.isActive) {
                             filteredMoves.add(nextN);
                         }
                     }
@@ -44,17 +44,17 @@ public class TurnHelpers {
 
     protected void CompleteTurn(Turn turn) {
         //move player piece
-        turn.piece.setPlayer(isPlayerTurn);
-        turn.piece.setActive(true);
+        turn.piece.isPlayer = isPlayerTurn;
+        turn.piece.isActive = true;
         ui.UpdateColour(turn.piece);
 
-        turn.origin.setPlayer(false);
-        turn.origin.setActive(false);
+        turn.origin.isPlayer = false;
+        turn.origin.isActive = false;
         ClearSelectedPiece(turn);
 
         //clear any captured pieces
         turn.capturedPieces.forEach(p -> {
-            p.setActive(false);
+            p.isActive = false;
             ui.UpdateColour(p);
         });
 
@@ -87,7 +87,7 @@ public class TurnHelpers {
             if(p == null){
                 continue;
             }
-            isWon = !p.isActive() && p.isPlayer() != isPlayerTurn;
+            isWon = !p.isActive && p.isPlayer != isPlayerTurn;
             if(!isWon) return false;
         }
         return isWon;
