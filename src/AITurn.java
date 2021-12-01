@@ -18,11 +18,6 @@ public class AITurn extends TurnHelpers{
         isPlayerTurn = false;
     }
 
-    //for high - is it blocked?
-    //can it move in that direction - look at king
-    //would that move make it a king? bump score
-    //would that move make it vulnerable? reduce score
-    //is this piece about to be taken?
     public void MakeMove(){
         //pieces with a player piece adjacent
         List<Piece> highPriority = new ArrayList<>();

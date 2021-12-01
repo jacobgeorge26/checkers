@@ -42,7 +42,7 @@ public class PlayerTurn extends TurnHelpers {
         if(legalMoveType == MoveType.Jump || legalMoveType == MoveType.Both){
             List<Node> jumpMoves = FilterMoves(piece, piece.possibleMoves, MoveType.Jump);
             for(Node nextNode : jumpMoves){
-                Turn newTurn = existingTurn == null ? new Turn(turn.origin) : existingTurn;
+                Turn newTurn = existingTurn == null ? new Turn(turn.origin) : existingTurn.Clone();
                 Piece nextPiece = allPieces[nextNode.pieceLocation];
                 if(nextPiece != turn.origin){ //TODO: this is technically allowed - code for this situation
                     nextPiece.isOption = true;
@@ -91,7 +91,6 @@ public class PlayerTurn extends TurnHelpers {
         //no matching turns
         if(matchingTurns.size() == 0){//TODO: warning that this move in invalid
             ClearSelectedPiece(turn);
-            ClearOptions(possibleMoves);
         }
         else {
             turn = matchingTurns.get(0);
@@ -100,7 +99,7 @@ public class PlayerTurn extends TurnHelpers {
                 turn = t.capturedPieces.size() > turn.capturedPieces.size() ? t : turn;
             }
             CompleteTurn(turn);
-            ClearOptions(possibleMoves);
         }
+        ClearOptions(possibleMoves);
     }
 }

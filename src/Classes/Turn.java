@@ -23,5 +23,14 @@ public class Turn {
     }
 
 
-
+    public Turn Clone() {
+        Turn clone = new Turn(this.origin);
+        clone.piece = this.piece;
+        clone.capturedPieces = new ArrayList<>();
+        this.capturedPieces.forEach(p -> clone.capturedPieces.add(p));
+        clone.explored = new ArrayList<>();
+        this.explored.forEach(i -> clone.explored.add(i));
+        clone.score = this.score;
+        return clone;
+    }
 }

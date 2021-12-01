@@ -38,6 +38,7 @@ public class GamePlay {
         //piece has been clicked again, deselect
         else if(playerTurn.turn.origin != null && piece == playerTurn.turn.origin){
             playerTurn.RemoveSelection(piece);
+            playerTurn = null;
         }
 
         //are they clicking the second button?
