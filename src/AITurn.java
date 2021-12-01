@@ -72,7 +72,7 @@ public class AITurn extends TurnHelpers{
             turn.piece = piece;
             return turn.capturedPieces.isEmpty()
                     ? moveType == MoveType.Both ? 0 : 1
-                    : turn.capturedPieces.size();
+                    : turn.capturedPieces.size() + turn.score;
         }
 
         int bestValue;
@@ -80,6 +80,11 @@ public class AITurn extends TurnHelpers{
             bestValue = -1000;
             for (int i = 0; i < unexploredA.size(); i++){
                 Piece nextPiece = allPieces[unexploredA.get(i).pieceLocation];
+
+                boolean becomesKing = isKingNow(nextPiece);
+                turn.score += becomesKing && piece.isKing ? 1 : 0; //add to score if this move would make it a king
+                nextPiece.isKing = becomesKing;
+
                 int eval = Minimax(turn, nextPiece, depth - 1, !isMin, MoveType.Neither);
                 bestValue = Math.max(bestValue, eval);
             }
@@ -89,6 +94,10 @@ public class AITurn extends TurnHelpers{
             for(int i = 0; i < unexploredJ.size(); i++){
                 Node nextNode = unexploredJ.get(i);
                 Piece nextPiece = allPieces[nextNode.pieceLocation];
+                boolean becomesKing = isKingNow(nextPiece);
+                turn.score += becomesKing && piece.isKing ? 1 : 0; //add to score if this move would make it a king
+                nextPiece.isKing = becomesKing;
+
                 Optional<Node> capturedNode = piece.possibleMoves.stream()
                         .filter(p -> p.direction == nextNode.direction).findFirst();
                 if(!capturedNode.isPresent()){

@@ -39,7 +39,7 @@ public class PlayerTurn extends TurnHelpers {
             for(Node nextNode : jumpMoves){
                 Turn newTurn = existingTurn == null ? new Turn(turn.origin) : existingTurn.Clone();
                 Piece nextPiece = allPieces[nextNode.pieceLocation];
-                if(nextPiece != turn.origin){ //TODO: this is technically allowed - code for this situation
+                if(true){
                     Optional<Node> capturedNode = piece.possibleMoves.stream()
                             .filter(p -> p.direction == nextNode.direction).findFirst();
                     Piece capturedPiece = allPieces[capturedNode.get().pieceLocation];
