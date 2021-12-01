@@ -50,6 +50,7 @@ public class TurnHelpers {
 
         turn.origin.isPlayer = false;
         turn.origin.isActive = false;
+        turn.origin.isKing = false;
         ClearSelectedPiece(turn);
 
         //clear any captured pieces

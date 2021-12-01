@@ -3,7 +3,10 @@ import Classes.Difficulty;
 import Classes.Piece;
 import Components.RoundButton;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -105,6 +108,8 @@ public class UI implements ActionListener {
 
 
     public void UpdateColour(Piece piece) {
+        DisplayKingIcon(piece);
+
         if(piece.isOption)
         {
             piece.button.SetColour(new Color(0, 125, 0));
@@ -120,6 +125,22 @@ public class UI implements ActionListener {
         }
         else{
             piece.button.SetColour(new Color(0, 0, 0));
+        }
+    }
+
+    private void DisplayKingIcon(Piece piece) {
+        if(piece.isKing){
+            try{
+                Image img = ImageIO.read(getClass().getResource("king.png"));
+                Image newimg = img.getScaledInstance( piece.button.GetSize() / 2, piece.button.GetSize() / 2,  java.awt.Image.SCALE_SMOOTH ) ;
+                piece.button.setIcon(new ImageIcon(newimg));
+            }
+            catch(Exception ex){
+                //TODO: error message
+            }
+        }
+        else{
+            piece.button.setIcon(null);
         }
     }
 

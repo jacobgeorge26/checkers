@@ -25,12 +25,17 @@ public class GamePlay {
     }
 
     public void pieceClicked(Piece piece) {
-        //SetupTest();
         //is it the player's turn?
         if(playerTurn != null && !playerTurn.isPlayerTurn) {
             //TODO: warning that it is not player's turn
             return;
         }
+
+        if(playerTurn == null && (!piece.isActive || !piece.isPlayer)){
+            //TODO: error message to select one their pieces
+            return;
+        }
+
         //are they clicking the first button?
         if (playerTurn == null){
             playerTurn = new PlayerTurn(ui, allPieces, piece);

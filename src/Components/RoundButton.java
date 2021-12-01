@@ -1,5 +1,6 @@
 package Components;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
@@ -16,6 +17,15 @@ public class RoundButton extends JButton {
         Dimension size = getPreferredSize();
         size.width = size.height = Math.max(size.width, size.height);
         setPreferredSize(size);
+        try{
+            Image img = ImageIO.read(getClass().getResource("king.png"));
+            setIcon(new ImageIcon(img));
+            setText("X");
+        }
+        catch(Exception ex){
+
+        }
+
 
     /*
      This call causes the JButton not to paint the background.
@@ -27,6 +37,8 @@ public class RoundButton extends JButton {
     public void SetColour(Color colour){
         setBackground(colour);
     }
+
+    public int GetSize(){return preferredSize().width;}
 
     protected void paintComponent(Graphics g) {
         if (getModel().isArmed()) {
