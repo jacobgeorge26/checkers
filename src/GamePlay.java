@@ -19,6 +19,8 @@ public class GamePlay {
 
     private AITurn aiTurn;
 
+    private PieceColour playerColour = PieceColour.red;
+
     public GamePlay(UI _ui, Piece[] _allPieces) {
         ui = _ui;
         allPieces = _allPieces;
@@ -38,7 +40,7 @@ public class GamePlay {
 
         //are they clicking the first button?
         if (playerTurn == null){
-            playerTurn = new PlayerTurn(ui, allPieces, piece);
+            playerTurn = new PlayerTurn(ui, allPieces, playerColour, piece);
         }
         //piece has been clicked again, deselect
         else if(playerTurn.turn.origin != null && piece == playerTurn.turn.origin){
@@ -50,7 +52,7 @@ public class GamePlay {
         if(playerTurn != null && !piece.isActive){
             playerTurn.ChooseMove(piece);
             playerTurn = null;
-            aiTurn = new AITurn(ui, allPieces);
+            aiTurn = new AITurn(ui, allPieces, playerColour);
             aiTurn.MakeMove();
         }
         else{

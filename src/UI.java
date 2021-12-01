@@ -129,7 +129,7 @@ public class UI implements ActionListener {
     }
 
     private void DisplayKingIcon(Piece piece) {
-        if(piece.isKing){
+        if(piece.isKing && !piece.isOption){
             try{
                 Image img = ImageIO.read(getClass().getResource("king.png"));
                 Image newimg = img.getScaledInstance( piece.button.GetSize() / 2, piece.button.GetSize() / 2,  java.awt.Image.SCALE_SMOOTH ) ;

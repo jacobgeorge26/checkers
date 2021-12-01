@@ -10,7 +10,12 @@ public class TurnHelpers {
 
     protected boolean isPlayerTurn;
 
-    public TurnHelpers(){
+    protected PieceColour playerColour;
+
+    public TurnHelpers(UI _ui, Piece[] _allPieces, PieceColour _playerColour){
+        ui = _ui;
+        allPieces = _allPieces;
+        playerColour = _playerColour;
     }
 
     protected List<Node> FilterMoves(Piece currentPiece, List<Node> possibleMoves, MoveType moveType) {
@@ -42,22 +47,37 @@ public class TurnHelpers {
         else return false;
     }
 
+    protected boolean isKingNow(Piece piece) {
+        int gridSize = piece.getGridSize();
+        if((isPlayerTurn && playerColour == PieceColour.white) || (!isPlayerTurn && playerColour == PieceColour.red)){
+            //is the piece in the bottom row?
+            return piece.getLocation() > ((gridSize * gridSize) / 2) - (gridSize / 2);
+        }
+        else {
+            //is the piece in the top row?
+            return piece.getLocation() <= gridSize / 2;
+        }
+    }
+
     protected void CompleteTurn(Turn turn) {
         //move player piece
         turn.piece.isPlayer = isPlayerTurn;
         turn.piece.isActive = true;
+        turn.piece.isKing = turn.origin.isKing || turn.piece.isKing;
         ui.UpdateColour(turn.piece);
 
         turn.origin.isPlayer = false;
         turn.origin.isActive = false;
         turn.origin.isKing = false;
-        ClearSelectedPiece(turn);
 
         //clear any captured pieces
         turn.capturedPieces.forEach(p -> {
             p.isActive = false;
             ui.UpdateColour(p);
         });
+
+        //clear selection formatting
+        ClearSelectedPiece(turn);
 
         boolean isWon = IsGameWon();
         if(isWon){
@@ -78,6 +98,7 @@ public class TurnHelpers {
     protected void ClearOptions(List<Turn> possibleMoves){
         for(Turn t : possibleMoves){
             t.piece.isOption = false;
+            t.piece.isKing = t.piece.isActive ? t.piece.isKing :  false;
             ui.UpdateColour(t.piece);
         }
     }

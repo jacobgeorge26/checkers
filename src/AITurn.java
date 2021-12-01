@@ -1,7 +1,4 @@
-import Classes.MoveType;
-import Classes.Node;
-import Classes.Piece;
-import Classes.Turn;
+import Classes.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,10 +8,8 @@ public class AITurn extends TurnHelpers{
 
     protected static int aiDepth = 3;
 
-    public AITurn(UI _ui, Piece[] _allPieces) {
-        super();
-        ui = _ui;
-        allPieces = _allPieces;
+    public AITurn(UI _ui, Piece[] _allPieces, PieceColour _playerColour) {
+        super(_ui, _allPieces, _playerColour);
         isPlayerTurn = false;
     }
 

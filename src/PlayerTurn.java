@@ -1,7 +1,4 @@
-import Classes.MoveType;
-import Classes.Node;
-import Classes.Piece;
-import Classes.Turn;
+import Classes.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,10 +10,8 @@ public class PlayerTurn extends TurnHelpers {
 
     private List<Turn> possibleMoves;
 
-    public PlayerTurn(UI _ui, Piece[] _allPieces, Piece _origin) {
-        super();
-        ui = _ui;
-        allPieces = _allPieces;
+    public PlayerTurn(UI _ui, Piece[] _allPieces, PieceColour _playerColour, Piece _origin) {
+        super(_ui, _allPieces, _playerColour);
         turn = new Turn(_origin);
         isPlayerTurn = true;
         ShowOptions();
@@ -45,17 +40,25 @@ public class PlayerTurn extends TurnHelpers {
                 Turn newTurn = existingTurn == null ? new Turn(turn.origin) : existingTurn.Clone();
                 Piece nextPiece = allPieces[nextNode.pieceLocation];
                 if(nextPiece != turn.origin){ //TODO: this is technically allowed - code for this situation
-                    nextPiece.isOption = true;
-                    ui.UpdateColour(nextPiece);
-
-                    moves.add(newTurn);
-                    newTurn = moves.get(moves.size() - 1); //get the duplicate
-                    newTurn.piece = nextPiece;
                     Optional<Node> capturedNode = piece.possibleMoves.stream()
                             .filter(p -> p.direction == nextNode.direction).findFirst();
-                    newTurn.capturedPieces.add(allPieces[capturedNode.get().pieceLocation]);
+                    Piece capturedPiece = allPieces[capturedNode.get().pieceLocation];
+                    if(!newTurn.capturedPieces.contains(capturedPiece)){
+                        //update nextPiece
+                        nextPiece.isOption = true;
+                        ui.UpdateColour(nextPiece);
+                        nextPiece.isKing = isKingNow(nextPiece) || piece.isKing;
 
-                    Search(nextPiece, MoveType.Jump, moves, newTurn);
+                        //update list of possible turns
+                        moves.add(newTurn);
+                        newTurn = moves.get(moves.size() - 1); //get the duplicate
+                        newTurn.piece = nextPiece;
+                        newTurn.capturedPieces.add(capturedPiece);
+
+                        //continue search
+                        Search(nextPiece, MoveType.Jump, moves, newTurn);
+                    }
+
                 }
             }
         }
@@ -66,6 +69,9 @@ public class PlayerTurn extends TurnHelpers {
                 if(nextPiece != turn.origin){
                     Turn newTurn = new Turn(turn.origin);
                     newTurn.piece = nextPiece;
+
+                    nextPiece.isKing = isKingNow(nextPiece);
+
                     moves.add(newTurn);
                     nextPiece.isOption = true;
                     ui.UpdateColour(nextPiece);
