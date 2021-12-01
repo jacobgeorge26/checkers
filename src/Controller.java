@@ -8,16 +8,19 @@ import java.util.stream.Collectors;
 import java.util.ArrayList;
 
 public class Controller {
-    private GamePlay game = new GamePlay();
+    private GamePlay game;
     public static void main(String[] args) {
         new Controller();
     }
 
     public Controller() {
         //create board - setup pieces
-        UI checkers = new UI(game);
-        game.ui = checkers;
-        game.allPieces = checkers.GetPieces();
+        UI checkers = new UI();
+        //create game
+        game = new GamePlay(checkers, checkers.GetPieces());
+        //give game controller to UI (to invoke event method)
+        checkers.game = game;
+        //create tree for game controller to search
         CreateTree();
     }
 

@@ -22,7 +22,6 @@ public class Turn {
         origin = _origin;
     }
 
-    public Turn(){
 
-    }
+
 }

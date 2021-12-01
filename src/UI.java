@@ -16,8 +16,7 @@ public class UI implements ActionListener {
     protected GamePlay game;
     private JCheckBoxMenuItem[] aiDiffs = new JCheckBoxMenuItem[3];
 
-    public UI(GamePlay _game) {
-        game = _game;
+    public UI() {
         Board board = new Board();
         gridSize = board.getGridSize();
         pieces = new Piece[(gridSize * gridSize/ 2) + 1];
