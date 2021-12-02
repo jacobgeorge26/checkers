@@ -299,13 +299,26 @@ public class UI implements ActionListener {
 
     }
 
-    protected  void InitialiseCapture(boolean isForcedCapture){
+    protected void InitialiseCapture(boolean isForcedCapture){
         if(isForcedCapture){
             forceCaptures[0].doClick();
         }
         else{
             forceCaptures[1].doClick();
         }
+    }
+
+    protected void GameOverDialog(String message){
+        int n = JOptionPane.showConfirmDialog(frame,
+                message + " Play again?", "Game Over",
+                JOptionPane.YES_NO_OPTION);
+        if(n == 0){
+            controller.ResetGame(playerColour);
+        }
+        else{
+            controller.CloseGame();
+        }
+
     }
 }
 

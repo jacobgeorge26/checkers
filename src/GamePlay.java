@@ -12,9 +12,11 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class GamePlay {
-    public UI ui;
+    protected UI ui;
 
-    public Piece[] allPieces;
+    protected Controller controller;
+
+    protected Piece[] allPieces;
 
     protected boolean isForcedCapture;
 
@@ -94,11 +96,13 @@ public class GamePlay {
 
 
     private void AI(){
-        isPaused = true;
-        ui.ShowMessage("The AI is thinking...", Color.darkGray);
-        aiTurn = new AITurn(ui, allPieces, playerColour, this);
-        aiTurn.MakeMove();
-        isPlayerTurn = !isPlayerTurn;
+        if(!isPaused){
+            isPaused = true;
+            ui.ShowMessage("The AI is thinking...", Color.darkGray);
+            aiTurn = new AITurn(ui, allPieces, playerColour, this);
+            aiTurn.MakeMove();
+            isPlayerTurn = !isPlayerTurn;
+        }
     }
 
 

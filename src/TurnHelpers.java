@@ -51,7 +51,7 @@ public class TurnHelpers {
                 if ((moveType == MoveType.Advance || moveType == MoveType.Both) && !possP.isActive) {
                     filteredMoves.add(possN);
                 }
-                if ((moveType == MoveType.Jump || moveType == MoveType.Both) && possP.isPlayer != isPlayerTurn && possP.isActive) {
+                if ((moveType == MoveType.Jump || moveType == MoveType.Both) && possP.isPlayer != currentPiece.isPlayer && possP.isActive) {
                     Object[] nextNs = possP.possibleMoves.stream().filter(x -> x.direction == possN.direction).toArray();
                     Node nextN = nextNs.length > 0 ? (Node) nextNs[0] : null;
                     if (nextN != null) {
@@ -67,11 +67,11 @@ public class TurnHelpers {
     }
 
     private boolean IsValidDirection(Node n, Piece p){
-        if((isPlayerTurn && playerColour == PieceColour.red) || (!isPlayerTurn && playerColour == PieceColour.white) ){
+        if((p.isPlayer && playerColour == PieceColour.red) || (!p.isPlayer && playerColour == PieceColour.white) ){
             //look up
             return ((n.direction == Direction.UpLeft || n.direction == Direction.UpRight) || p.isKing);
         }
-        else if((isPlayerTurn && playerColour == PieceColour.white) || (!isPlayerTurn && playerColour == PieceColour.red)){
+        else if((p.isPlayer && playerColour == PieceColour.white) || (!p.isPlayer && playerColour == PieceColour.red)){
             //look down
             return ((n.direction == Direction.DownLeft || n.direction == Direction.DownRight) || p.isKing);
         }
@@ -109,13 +109,8 @@ public class TurnHelpers {
 
         //clear selection formatting
         ClearSelectedPiece(turn);
+        IsGameWon();
 
-        boolean isWon = IsGameWon();
-        if(isWon){
-            String message = isPlayerTurn ? " the player. Well done!" : " the AI. Good try!";
-            System.out.println("The winner is " + message);
-            //TODO: reset game?
-        }
         isPlayerTurn = !isPlayerTurn;
     }
 
@@ -136,21 +131,49 @@ public class TurnHelpers {
         }
     }
 
-    private boolean IsGameWon() {
-        boolean isWon = true;
+    private void IsGameWon() {
+        //it's my turn
+        //are all their pieces now captured?
+        //if they have any pieces left, are all of them trapped?
+        boolean thisPlayerTrapped = true, otherPlayerTrapped = true, otherPlayerCaptured = true;
+
         for(Piece p : allPieces){
-            if(p == null){
+            if(p == null || !p.isActive){
                 continue;
             }
-            isWon = !p.isActive && p.isPlayer != isPlayerTurn;
-            if(!isWon) return false;
+            else if(p.isActive && p.isPlayer == isPlayerTurn){
+                //are all my pieces trapped?
+                //if so, game over and I've lost
+                if(!FilterMoves(p, p.possibleMoves, MoveType.Both).isEmpty()){
+                    thisPlayerTrapped = false;
+                }
+            }
+            else if(p.isActive && p.isPlayer != isPlayerTurn){
+                //not all their pieces are captured
+                otherPlayerCaptured = false;
+                //are all their pieces trapped?
+                //if so, game over and I've won
+                if(!FilterMoves(p, p.possibleMoves, MoveType.Both).isEmpty()){
+                    otherPlayerTrapped = false;
+                }
+            }
         }
-        return isWon;
+        if(thisPlayerTrapped){
+            isPlayerTurn = !isPlayerTurn;
+            GameOver("All pieces are trapped");
+        }
+        else if(otherPlayerCaptured){
+            GameOver("All pieces are captured");
+        }
+        else if(otherPlayerTrapped){
+            GameOver("All pieces are trapped");
+        }
+
     }
 
-    //TODO: reset game
-    protected void GameOver(boolean playerWon){
-        String message = playerWon ? "Congratulations! You won!" : "The AI won!";
-        ui.ShowMessage(message, Color.GREEN);
+    protected void GameOver(String message){
+        game.isPaused = true;
+        message = isPlayerTurn ? "Congratulations! You won! "  + message: "The AI won! " + message;
+        ui.GameOverDialog(message);
     }
 }

@@ -23,6 +23,7 @@ public class AITurn extends TurnHelpers{
         Turn bestTurn = null;
         for(Piece p : highPriority){
             Turn turn = new Turn(p);
+            //TODO: forced capture is missing possible jumps
             turn.score = Minimax(turn, p, aiDepth, false, MoveType.Both);
             bestTurn = bestTurn == null || turn.score > bestTurn.score ? turn : bestTurn;
             System.out.println("Piece " + p.getLocation() + " has score " + turn.score);
@@ -32,14 +33,14 @@ public class AITurn extends TurnHelpers{
             List<Piece> lowPriority = GetPriorityPieces(Priority.Low);
             for(Piece p : lowPriority){
                 Turn turn = new Turn(p);
-                turn.score = Minimax(turn, p, aiDepth, false, MoveType.Both);
+                turn.score = Minimax(turn, p, aiDepth, true, MoveType.Both);
                 bestTurn = bestTurn == null || turn.score > bestTurn.score ? turn : bestTurn;
                 System.out.println("Piece " + p.getLocation() + " has score " + turn.score);
             }
         }
         if(bestTurn == null || bestTurn.score == 0){
-            ui.ShowMessage("The AI has no possible moves", Color.orange);
-            GameOver(true);
+            isPlayerTurn = !isPlayerTurn;
+            GameOver("All pieces are trapped");
         }
         else{
             System.out.println("MOVING piece " + bestTurn.origin.getLocation() + " to piece " + bestTurn.piece.getLocation());

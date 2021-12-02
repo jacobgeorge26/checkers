@@ -65,4 +65,9 @@ public class Controller {
     public void ToggleForceCapture(boolean isForcedCapture) {
         game.isForcedCapture = isForcedCapture;
     }
+
+    public void CloseGame() {
+        JFrame currentFrame = ui.GetFrame();
+        currentFrame.dispatchEvent(new WindowEvent(currentFrame, WindowEvent.WINDOW_CLOSING));
+    }
 }

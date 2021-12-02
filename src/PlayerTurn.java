@@ -92,7 +92,9 @@ public class PlayerTurn extends TurnHelpers {
                         newTurn.capturedPieces.add(capturedPiece);
 
                         //continue search
+                        nextPiece.isPlayer = true;
                         Search(nextPiece, MoveType.Jump, moves, newTurn, alternativeOrigin);
+                        nextPiece.isPlayer = false;
                     }
 
                 }

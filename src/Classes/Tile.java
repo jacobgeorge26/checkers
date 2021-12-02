@@ -22,6 +22,4 @@ public class Tile extends Board{
         c = r % 2 == 0 ? c - 1 : c;
         return (int)c;
     }
-
-    protected boolean isTaken = false;
 }
