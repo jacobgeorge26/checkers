@@ -20,6 +20,7 @@ public class UI implements ActionListener {
     protected PieceColour playerColour;
     private JCheckBoxMenuItem[] aiDiffs = new JCheckBoxMenuItem[3];
     private JMenu reset;
+    private JCheckBoxMenuItem[] forceCaptures = new JCheckBoxMenuItem[2];
     private JTextField messageBox;
 
     public UI(PieceColour _playerColour, Controller _controller) {
@@ -115,7 +116,6 @@ public class UI implements ActionListener {
         //AI difficulty options
         JMenu aiDifficulty = new JMenu("AI Difficulty");
         aiDifficulty.setPreferredSize(new Dimension(100, 30));
-
         JCheckBoxMenuItem easy = new JCheckBoxMenuItem("Easy");
         easy.addActionListener(this);
         JCheckBoxMenuItem med = new JCheckBoxMenuItem("Medium");
@@ -137,9 +137,21 @@ public class UI implements ActionListener {
         resetColour.addActionListener(this);
         reset.add(resetColour);
 
+        //Forced capture options
+        JMenu forcedCapture = new JMenu("Forced Capture");
+        forcedCapture.setPreferredSize(new Dimension(100, 30));
+        JCheckBoxMenuItem on = new JCheckBoxMenuItem("On");
+        on.addActionListener(this);
+        JCheckBoxMenuItem off = new JCheckBoxMenuItem("Off");
+        off.addActionListener(this);
+        forceCaptures = new JCheckBoxMenuItem[]{on, off};
+        forcedCapture.add(on);
+        forcedCapture.add(off);
+
 
         optionMenu.add(reset);
         optionMenu.add(aiDifficulty);
+        optionMenu.add(forcedCapture);
         frame.setJMenuBar(optionMenu);
     }
 
@@ -255,14 +267,45 @@ public class UI implements ActionListener {
                 controller.ResetGame(playerColour);
             }
         }
+        //Forced capture options
+        else if(source == forceCaptures[0]){
+            //on
+            forceCaptures[0].setState(true);
+            forceCaptures[1].setState(false);
+            controller.ToggleForceCapture(true);
+        }
+        else if(source == forceCaptures[1]){
+            //off
+            forceCaptures[0].setState(false);
+            forceCaptures[1].setState(true);
+            controller.ToggleForceCapture(false);
+        }
     }
 
     protected JFrame GetFrame() {
         return frame;
     }
 
-    protected void InitialiseDifficulty(){
-        aiDiffs[1].doClick();
+    protected void InitialiseDifficulty(Difficulty diff){
+        if(diff == Difficulty.Easy){
+            aiDiffs[0].doClick();
+        }
+        else if(diff == Difficulty.Medium){
+            aiDiffs[1].doClick();
+        }
+        else{
+            aiDiffs[2].doClick();
+        }
+
+    }
+
+    protected  void InitialiseCapture(boolean isForcedCapture){
+        if(isForcedCapture){
+            forceCaptures[0].doClick();
+        }
+        else{
+            forceCaptures[1].doClick();
+        }
     }
 }
 

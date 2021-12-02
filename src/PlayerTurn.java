@@ -43,12 +43,16 @@ public class PlayerTurn extends TurnHelpers {
     }
 
     protected void ShowOptions(){
-        List<Piece> forcePiece = ForcedCapture();
-        if(!forcePiece.isEmpty() && !forcePiece.contains(turn.origin)){
-            ui.ShowMessage("Forced capture is turned on and there is a possible capture", Color.orange);
-            game.RestartMove(turn.origin);
-            return;
+        //if forced capture then check for any pieces that need to capture
+        if(game.isForcedCapture){
+            List<Piece> forcePiece = ForcedCapture();
+            if(!forcePiece.isEmpty() && !forcePiece.contains(turn.origin)){
+                ui.ShowMessage("Forced capture is turned on and there is a possible capture", Color.orange);
+                game.RestartMove(turn.origin);
+                return;
+            }
         }
+
         possibleMoves = new ArrayList<Turn>();
         if(turn.origin.isPlayer && turn.origin.isActive) {
             turn.origin.isSelected = true;

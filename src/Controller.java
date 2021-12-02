@@ -12,11 +12,11 @@ public class Controller {
     private UI ui;
     private GamePlay game;
     public static void main(String[] args) {
-        new Controller(PieceColour.red);
+        new Controller(PieceColour.red, true, Difficulty.Easy);
     }
     private PieceColour defaultPlayerColour;
 
-    public Controller(PieceColour _playerColour) {
+    public Controller(PieceColour _playerColour, boolean isForcedCapture, Difficulty aiDifficulty) {
         defaultPlayerColour = _playerColour;
         //create board - setup pieces
         //give game controller to UI (to create bridge to invoke event methods)
@@ -25,8 +25,9 @@ public class Controller {
         Piece[] allPieces = ui.GetPieces();;
         CreateTree(allPieces);
         //create game
-        game = new GamePlay(ui, allPieces, defaultPlayerColour);
-        ui.InitialiseDifficulty();
+        game = new GamePlay(ui, allPieces, defaultPlayerColour, isForcedCapture, aiDifficulty);
+        ui.InitialiseDifficulty(aiDifficulty);
+        ui.InitialiseCapture(isForcedCapture);
     }
 
 
@@ -56,8 +57,12 @@ public class Controller {
     }
 
     public void ResetGame(PieceColour playerColour) {
-        new Controller(playerColour);
+        new Controller(playerColour, game.isForcedCapture, game.aiDifficulty);
         JFrame currentFrame = ui.GetFrame();
         currentFrame.dispatchEvent(new WindowEvent(currentFrame, WindowEvent.WINDOW_CLOSING));
+    }
+
+    public void ToggleForceCapture(boolean isForcedCapture) {
+        game.isForcedCapture = isForcedCapture;
     }
 }

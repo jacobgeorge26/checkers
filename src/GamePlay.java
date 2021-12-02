@@ -16,7 +16,9 @@ public class GamePlay {
 
     public Piece[] allPieces;
 
-    private Difficulty aiDifficulty;
+    protected boolean isForcedCapture;
+
+    protected Difficulty aiDifficulty;
 
     private TurnHelpers turnHelpers;
 
@@ -30,11 +32,12 @@ public class GamePlay {
 
     protected boolean isPaused = false;
 
-    public GamePlay(UI _ui, Piece[] _allPieces, PieceColour _playerColour) {
+    public GamePlay(UI _ui, Piece[] _allPieces, PieceColour _playerColour, boolean _isForcedCapture, Difficulty _aiDifficulty) {
         ui = _ui;
         allPieces = _allPieces;
         playerColour = _playerColour;
-        UpdateDifficulty(Difficulty.Medium);
+        isForcedCapture = _isForcedCapture;
+        aiDifficulty = _aiDifficulty;
         if(playerColour == PieceColour.white){
             AI();
         }
