@@ -105,7 +105,8 @@ public class UI implements ActionListener {
         messageBox.setEnabled(false);
         messageBox.setFont(new Font("Arial", Font.PLAIN, 18));
         messageBox.setHorizontalAlignment(SwingConstants.LEFT);
-        ShowMessage("Good luck!", Color.darkGray);
+        String message = playerColour == PieceColour.red ? "You are playing as red and go first." : "You are playing as white. AI starts.";
+        ShowMessage(message + " Good luck!", Color.darkGray);
     }
 
     private void SetupOptions(JFrame frame) {
@@ -145,14 +146,16 @@ public class UI implements ActionListener {
     public void ShowMessage(String message, Color boxColor){
         messageBox.setText(message);
         messageBox.setBorder(new LineBorder(boxColor));
-        Timer timer = new Timer(5000, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                messageBox.setText("");
-                messageBox.setBorder(new LineBorder(Color.darkGray));
-            }
-        });
-        timer.start();
+        new java.util.Timer().schedule(
+                new java.util.TimerTask() {
+                    @Override
+                    public void run() {
+                        messageBox.setText("");
+                        messageBox.setBorder(new LineBorder(Color.darkGray));
+                    }
+                },
+                2000
+        );
     }
 
 
@@ -256,6 +259,10 @@ public class UI implements ActionListener {
 
     protected JFrame GetFrame() {
         return frame;
+    }
+
+    protected void InitialiseDifficulty(){
+        aiDiffs[1].doClick();
     }
 }
 

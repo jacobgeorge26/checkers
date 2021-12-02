@@ -1,13 +1,18 @@
 import Classes.*;
 
+import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class AITurn extends TurnHelpers{
 
-    protected static int aiDepth = 3;
+    protected static int aiDepth;
+    private long startTime;
+
 
     public AITurn(UI _ui, Piece[] _allPieces, PieceColour _playerColour) {
         super(_ui, _allPieces, _playerColour);
@@ -15,6 +20,7 @@ public class AITurn extends TurnHelpers{
     }
 
     public void MakeMove(){
+        startTime = System.nanoTime();
         //pieces with a player piece adjacent
         List<Piece> highPriority = new ArrayList<>();
         //pieces with an empty space adjacent
@@ -55,7 +61,19 @@ public class AITurn extends TurnHelpers{
         }
         else{
             System.out.println("MOVING piece " + bestTurn.origin.getLocation() + " to piece " + bestTurn.piece.getLocation());
-            CompleteTurn(bestTurn);
+            Turn finalBestTurn = bestTurn;
+            new java.util.Timer().schedule(
+                    new java.util.TimerTask() {
+                        @Override
+                        public void run() {
+                            System.out.println("here");
+                            CompleteTurn(finalBestTurn);
+//                            ui.ShowMessage("", Color.darkGray);
+                        }
+                    },
+                    1500
+            );
+
         }
     }
 

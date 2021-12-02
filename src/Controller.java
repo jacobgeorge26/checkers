@@ -12,7 +12,7 @@ public class Controller {
     private UI ui;
     private GamePlay game;
     public static void main(String[] args) {
-        new Controller(PieceColour.white);
+        new Controller(PieceColour.red);
     }
     private PieceColour defaultPlayerColour;
 
@@ -26,6 +26,7 @@ public class Controller {
         CreateTree(allPieces);
         //create game
         game = new GamePlay(ui, allPieces, defaultPlayerColour);
+        ui.InitialiseDifficulty();
     }
 
 

@@ -1,6 +1,10 @@
 import Classes.*;
 
+import javax.swing.*;
+import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -69,7 +73,7 @@ public class GamePlay {
             //have they selected one of the valid moves?
             else if(!piece.isOption)
             {
-                ui.ShowMessage("Select a valid move", Color.red);
+                ui.ShowMessage("That move is not possible. Select a valid move", Color.red);
             }
             //validation passed - complete the move!
             else{
@@ -83,6 +87,7 @@ public class GamePlay {
 
 
     private void AI(){
+        ui.ShowMessage("The AI is thinking...", Color.darkGray);
         aiTurn = new AITurn(ui, allPieces, playerColour);
         aiTurn.MakeMove();
         isPlayerTurn = !isPlayerTurn;
