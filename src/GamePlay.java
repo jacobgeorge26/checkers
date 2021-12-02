@@ -25,6 +25,7 @@ public class GamePlay {
     public GamePlay(UI _ui, Piece[] _allPieces) {
         ui = _ui;
         allPieces = _allPieces;
+        UpdateDifficulty(Difficulty.Medium);
     }
 
     public void pieceClicked(Piece piece) {
@@ -88,5 +89,10 @@ public class GamePlay {
                 AITurn.aiDepth = 4;
                 break;
         }
+    }
+
+    //TODO: implement this
+    public void ResetGame(PieceColour playerColour) {
+        ui.ShowMessage("Starting again as " + playerColour.name(), Color.magenta);
     }
 }

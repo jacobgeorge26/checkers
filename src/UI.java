@@ -1,6 +1,7 @@
 import Classes.Board;
 import Classes.Difficulty;
 import Classes.Piece;
+import Classes.PieceColour;
 import Components.RoundButton;
 
 import javax.imageio.ImageIO;
@@ -11,14 +12,18 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class UI implements ActionListener {
+    private JFrame frame;
     public JPanel rootPanel;
     private int gridSize;
     private Piece[] pieces;
     protected GamePlay game;
+    protected PieceColour playerColour;
     private JCheckBoxMenuItem[] aiDiffs = new JCheckBoxMenuItem[3];
+    private JMenu reset;
     private JTextField messageBox;
 
-    public UI() {
+    public UI(PieceColour _playerColour) {
+        playerColour = _playerColour;
         Board board = new Board();
         gridSize = board.getGridSize();
         pieces = new Piece[(gridSize * gridSize/ 2) + 1];
@@ -27,7 +32,7 @@ public class UI implements ActionListener {
 
     private void CreateBoard() {
         //setup main layout
-        JFrame frame = new JFrame();
+        frame = new JFrame();
         SetupOptions(frame);
         rootPanel = new JPanel();
         rootPanel.setLayout(new BoxLayout(rootPanel, BoxLayout.PAGE_AXIS));
@@ -104,8 +109,10 @@ public class UI implements ActionListener {
 
     private void SetupOptions(JFrame frame) {
         JMenuBar optionMenu = new JMenuBar();
+
+        //AI difficulty options
         JMenu aiDifficulty = new JMenu("AI Difficulty");
-        aiDifficulty.setPreferredSize(new Dimension(100, 20));
+        aiDifficulty.setPreferredSize(new Dimension(100, 30));
 
         JCheckBoxMenuItem easy = new JCheckBoxMenuItem("Easy");
         easy.addActionListener(this);
@@ -114,12 +121,22 @@ public class UI implements ActionListener {
         JCheckBoxMenuItem hard = new JCheckBoxMenuItem("Hard");
         hard.addActionListener(this);
         aiDiffs = new JCheckBoxMenuItem[]{easy, med, hard};
-        med.doClick();
-
         aiDifficulty.add(easy);
         aiDifficulty.add(med);
         aiDifficulty.add(hard);
 
+        //Reset game option
+        reset = new JMenu("Reset");
+        reset.setPreferredSize(new Dimension(100, 30));
+        JMenuItem resetGame = new JMenuItem("Reset Game");
+        resetGame.addActionListener(this);
+        reset.add(resetGame);
+        JMenuItem resetColour = new JMenuItem("Switch Colour");
+        resetColour.addActionListener(this);
+        reset.add(resetColour);
+
+
+        optionMenu.add(reset);
         optionMenu.add(aiDifficulty);
         frame.setJMenuBar(optionMenu);
     }
@@ -135,10 +152,6 @@ public class UI implements ActionListener {
             }
         });
         timer.start();
-    }
-
-    private void ClearError(){
-
     }
 
 
@@ -188,21 +201,47 @@ public class UI implements ActionListener {
         Object source = e.getSource();
 
         //AI difficulty options
-        if(source == aiDiffs[0]){ //easy
+        if(source == aiDiffs[0]){
+            //easy AI
             aiDiffs[0].setState(true);
             aiDiffs[1].setState(false);
             aiDiffs[2].setState(false);
             game.UpdateDifficulty(Difficulty.Easy);
         }
         else if(source == aiDiffs[1]){
+            //medium AI
             aiDiffs[0].setState(false);
             aiDiffs[1].setState(true);
             aiDiffs[2].setState(false);
+            game.UpdateDifficulty(Difficulty.Medium);
         }
         else if(source == aiDiffs[2]){
+            //hard AI
             aiDiffs[0].setState(false);
             aiDiffs[1].setState(false);
             aiDiffs[2].setState(true);
+            game.UpdateDifficulty(Difficulty.Hard);
+        }
+        //Reset options
+        else if(source == reset.getItem(0)){
+            //reset game
+            int n = JOptionPane.showConfirmDialog(frame,
+                    "You will lose any progress you have made.", "Reset Game?",
+                    JOptionPane.YES_NO_OPTION);
+            if(n == 0){
+                game.ResetGame(PieceColour.red);
+            }
+        }
+        else if(source == reset.getItem(1)){
+            //reset game as other colour
+            int n = JOptionPane.showConfirmDialog(frame,
+                    "You will lose any progress you have made.", "Switch Colour?",
+                    JOptionPane.YES_NO_OPTION);
+            if(n == 0){
+                //swap colour
+                playerColour = playerColour == PieceColour.red ? PieceColour.white : PieceColour.red;
+                game.ResetGame(playerColour);
+            }
         }
     }
 }

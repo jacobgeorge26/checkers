@@ -1,6 +1,7 @@
 import Classes.Direction;
 import Classes.Node;
 import Classes.Piece;
+import Classes.PieceColour;
 
 import java.awt.*;
 import java.util.List;
@@ -15,7 +16,7 @@ public class Controller {
 
     public Controller() {
         //create board - setup pieces
-        UI checkers = new UI();
+        UI checkers = new UI(PieceColour.red);
         //create game
         game = new GamePlay(checkers, checkers.GetPieces());
         //give game controller to UI (to invoke event method)
