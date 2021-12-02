@@ -144,7 +144,7 @@ public class UI implements ActionListener {
     }
 
     public void ShowMessage(String message, Color boxColor){
-        messageBox.setText(message);
+        messageBox.setText(" " + message);
         messageBox.setBorder(new LineBorder(boxColor));
         new java.util.Timer().schedule(
                 new java.util.TimerTask() {

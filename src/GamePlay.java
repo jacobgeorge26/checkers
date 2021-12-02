@@ -59,7 +59,8 @@ public class GamePlay {
                 ui.ShowMessage("Select one of your pieces", Color.red);
             }
             else{
-                playerTurn = new PlayerTurn(ui, allPieces, playerColour, piece);
+                playerTurn = new PlayerTurn(ui, allPieces, this, playerColour, piece);
+                playerTurn.ShowOptions();
             }
         }
         //piece has been clicked again, deselect
@@ -113,5 +114,11 @@ public class GamePlay {
                 AITurn.aiDepth = 4;
                 break;
         }
+    }
+
+    //restart player's move
+    protected void RestartMove(Piece piece) {
+        playerTurn.RemoveSelection(piece);
+        playerTurn = null;
     }
 }

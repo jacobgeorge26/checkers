@@ -11,35 +11,15 @@ import java.util.Optional;
 public class AITurn extends TurnHelpers{
 
     protected static int aiDepth;
-    private GamePlay game;
-
 
     public AITurn(UI _ui, Piece[] _allPieces, PieceColour _playerColour, GamePlay _game) {
-        super(_ui, _allPieces, _playerColour);
-        game = _game;
+        super(_ui, _allPieces, _game, _playerColour);
         isPlayerTurn = false;
     }
 
     public void MakeMove(){
-        //pieces with a player piece adjacent
-        List<Piece> highPriority = new ArrayList<>();
-        //pieces with an empty space adjacent
-        List<Piece> lowPriority = new ArrayList<>();
-        for(Piece p : allPieces){
-            if(p == null || p.isPlayer || !p.isActive){
-                continue;
-            }
-            for(Node n : p.possibleMoves){
-                Piece poss = allPieces[n.pieceLocation];
-                if(poss.isPlayer && poss.isActive && !highPriority.contains(p)){
-                    highPriority.add(p);
-                }
-                if(!poss.isActive && !lowPriority.contains(p)){
-                    lowPriority.add(p);
-                }
-            }
-        }
-
+        //start with any potential jump moves
+        List<Piece> highPriority = GetPriorityPieces(Priority.High);
         Turn bestTurn = null;
         for(Piece p : highPriority){
             Turn turn = new Turn(p);
@@ -48,6 +28,8 @@ public class AITurn extends TurnHelpers{
             System.out.println("Piece " + p.getLocation() + " has score " + turn.score);
         }
         if(bestTurn == null || bestTurn.score < 2){
+            //no jump moves possible, get low priority moves
+            List<Piece> lowPriority = GetPriorityPieces(Priority.Low);
             for(Piece p : lowPriority){
                 Turn turn = new Turn(p);
                 turn.score = Minimax(turn, p, aiDepth, false, MoveType.Both);
@@ -92,7 +74,7 @@ public class AITurn extends TurnHelpers{
             turn.piece = piece;
             return turn.capturedPieces.isEmpty()
                     ? moveType == MoveType.Both ? 0 : 1
-                    : turn.capturedPieces.size() + turn.score;
+                    : 1 + turn.capturedPieces.size() + turn.score;
         }
 
         int bestValue;
@@ -109,7 +91,7 @@ public class AITurn extends TurnHelpers{
                 bestValue = Math.max(bestValue, eval);
             }
         }
-        else{
+        else if(!isMin || unexploredA.isEmpty()){
             bestValue = 1000;
             for(int i = 0; i < unexploredJ.size(); i++){
                 Node nextNode = unexploredJ.get(i);
@@ -130,8 +112,12 @@ public class AITurn extends TurnHelpers{
                 }
             }
         }
+        else{
+            //this should never be reached
+            ui.ShowMessage("There has been an error in AITurn/MiniMax. No valid moves were found and this situation was not handled correctly", Color.red);
+            return 0;
+        }
         return bestValue;
-
     }
 
 }

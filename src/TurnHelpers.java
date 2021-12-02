@@ -9,14 +9,38 @@ public class TurnHelpers {
 
     protected Piece[] allPieces;
 
+    protected GamePlay game;
+
     protected boolean isPlayerTurn;
 
     protected PieceColour playerColour;
 
-    public TurnHelpers(UI _ui, Piece[] _allPieces, PieceColour _playerColour){
+    public TurnHelpers(UI _ui, Piece[] _allPieces, GamePlay _game, PieceColour _playerColour){
         ui = _ui;
         allPieces = _allPieces;
+        game = _game;
         playerColour = _playerColour;
+    }
+
+    protected List<Piece> GetPriorityPieces(Priority priority) {
+        List<Piece> priorityPieces = new ArrayList<>();
+        for(Piece p : allPieces){
+            if(p == null || p.isPlayer != isPlayerTurn || !p.isActive){
+                continue;
+            }
+            for(Node n : p.possibleMoves){
+                Piece poss = allPieces[n.pieceLocation];
+                //pieces with a player piece adjacent
+                if(poss.isPlayer != isPlayerTurn && poss.isActive && !priorityPieces.contains(p) && priority == Priority.High){
+                    priorityPieces.add(p);
+                }
+                //pieces with an empty space adjacent
+                if(!poss.isActive && !priorityPieces.contains(p) && priority == Priority.Low){
+                    priorityPieces.add(p);
+                }
+            }
+        }
+        return priorityPieces;
     }
 
     protected List<Node> FilterMoves(Piece currentPiece, List<Node> possibleMoves, MoveType moveType) {
@@ -103,10 +127,12 @@ public class TurnHelpers {
     }
 
     protected void ClearOptions(List<Turn> possibleMoves){
-        for(Turn t : possibleMoves){
-            t.piece.isOption = false;
-            t.piece.isKing = t.piece.isActive ? t.piece.isKing :  false;
-            ui.UpdateColour(t.piece);
+        if(possibleMoves != null){
+            for(Turn t : possibleMoves){
+                t.piece.isOption = false;
+                t.piece.isKing = t.piece.isActive ? t.piece.isKing :  false;
+                ui.UpdateColour(t.piece);
+            }
         }
     }
 
