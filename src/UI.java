@@ -5,7 +5,6 @@ import Components.RoundButton;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -13,11 +12,11 @@ import java.awt.event.ActionListener;
 
 public class UI implements ActionListener {
     public JPanel rootPanel;
-    private JPanel panel;
     private int gridSize;
     private Piece[] pieces;
     protected GamePlay game;
     private JCheckBoxMenuItem[] aiDiffs = new JCheckBoxMenuItem[3];
+    private JTextField messageBox;
 
     public UI() {
         Board board = new Board();
@@ -27,9 +26,16 @@ public class UI implements ActionListener {
     }
 
     private void CreateBoard() {
+        //setup main layout
         JFrame frame = new JFrame();
         SetupOptions(frame);
-        panel = new JPanel(new GridLayout(gridSize, gridSize));
+        rootPanel = new JPanel();
+        rootPanel.setLayout(new BoxLayout(rootPanel, BoxLayout.PAGE_AXIS));
+        SetupMessageBox();
+        rootPanel.add(messageBox);
+
+        //setup board
+        JPanel panel = new JPanel(new GridLayout(gridSize, gridSize));
         boolean colour = true;
         for (int index = 0; index < gridSize * gridSize; index++) {
             //setup panel for grid colour
@@ -67,6 +73,7 @@ public class UI implements ActionListener {
                 piece.button = pieceButton;
                 UpdateColour(piece);
                 cellPanel.add(pieceButton);
+                cellPanel.setAlignmentY(SwingConstants.CENTER);
 
 
                 pieces[piece.getLocation()] = piece;
@@ -75,13 +82,24 @@ public class UI implements ActionListener {
             panel.add(cellPanel);
         }
 
+        //piece it all together
         panel.setPreferredSize(new Dimension(500, 500));
         GridBagConstraints c = new GridBagConstraints();
         c.anchor = GridBagConstraints.CENTER;
 
-        frame.setContentPane(panel);
+        frame.setContentPane(rootPanel);
+        rootPanel.add(panel);
+
         frame.pack();
         frame.setVisible(true);
+    }
+
+    private void SetupMessageBox() {
+        messageBox = new JFormattedTextField();
+        messageBox.setEnabled(false);
+        messageBox.setFont(new Font("Arial", Font.PLAIN, 18));
+        messageBox.setHorizontalAlignment(SwingConstants.LEFT);
+        ShowMessage("Good luck!", Color.darkGray);
     }
 
     private void SetupOptions(JFrame frame) {
@@ -104,6 +122,23 @@ public class UI implements ActionListener {
 
         optionMenu.add(aiDifficulty);
         frame.setJMenuBar(optionMenu);
+    }
+
+    public void ShowMessage(String message, Color boxColor){
+        messageBox.setText(message);
+        messageBox.setBorder(new LineBorder(boxColor));
+        Timer timer = new Timer(5000, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                messageBox.setText("");
+                messageBox.setBorder(new LineBorder(Color.darkGray));
+            }
+        });
+        timer.start();
+    }
+
+    private void ClearError(){
+
     }
 
 
@@ -136,7 +171,7 @@ public class UI implements ActionListener {
                 piece.button.setIcon(new ImageIcon(newimg));
             }
             catch(Exception ex){
-                //TODO: error message
+                ShowMessage("There has been an error in UI/DisplayKingIcon. There was an issue displaying the king icon in piece " + piece.getLocation(), Color.red);
             }
         }
         else{

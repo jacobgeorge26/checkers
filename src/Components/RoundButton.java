@@ -17,14 +17,6 @@ public class RoundButton extends JButton {
         Dimension size = getPreferredSize();
         size.width = size.height = Math.max(size.width, size.height);
         setPreferredSize(size);
-        try{
-            Image img = ImageIO.read(getClass().getResource("king.png"));
-            setIcon(new ImageIcon(img));
-            setText("X");
-        }
-        catch(Exception ex){
-
-        }
 
 
     /*
@@ -52,7 +44,7 @@ public class RoundButton extends JButton {
     }
 
     protected void paintBorder(Graphics g) {
-        g.setColor(Color.darkGray);
+        g.setColor(Color.black);
         g.drawOval(0, 0, getSize().width - 1, getSize().height - 1);
     }
 

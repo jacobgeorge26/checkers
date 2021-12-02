@@ -1,5 +1,6 @@
 import Classes.*;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,34 +30,44 @@ public class GamePlay {
     public void pieceClicked(Piece piece) {
         //is it the player's turn?
         if(playerTurn != null && !playerTurn.isPlayerTurn) {
-            //TODO: warning that it is not player's turn
+            ui.ShowMessage("The AI is thinking", Color.ORANGE);
             return;
         }
 
-        if(playerTurn == null && (!piece.isActive || !piece.isPlayer)){
-            //TODO: error message to select one their pieces
-            return;
-        }
 
         //are they clicking the first button?
         if (playerTurn == null){
-            playerTurn = new PlayerTurn(ui, allPieces, playerColour, piece);
+            //have they clicked one of their pieces?
+            if(!piece.isActive || !piece.isPlayer){
+                ui.ShowMessage("Select one of your pieces", Color.red);
+            }
+            else{
+                playerTurn = new PlayerTurn(ui, allPieces, playerColour, piece);
+            }
         }
         //piece has been clicked again, deselect
         else if(playerTurn.turn.origin != null && piece == playerTurn.turn.origin){
             playerTurn.RemoveSelection(piece);
             playerTurn = null;
         }
-
         //are they clicking the second button?
-        if(playerTurn != null && !piece.isActive){
-            playerTurn.ChooseMove(piece);
-            playerTurn = null;
-            aiTurn = new AITurn(ui, allPieces, playerColour);
-            aiTurn.MakeMove();
-        }
-        else{
-            //TODO: warning to select a non-active square
+        else if(playerTurn != null){
+            //have they selected an empty square?
+            if(piece.isActive){
+                ui.ShowMessage("Select an empty square", Color.red);
+            }
+            //have they selected one of the valid moves?
+            else if(!piece.isOption)
+            {
+                ui.ShowMessage("Select a valid move", Color.red);
+            }
+            //validation passed - complete the move!
+            else{
+                playerTurn.ChooseMove(piece);
+                playerTurn = null;
+                aiTurn = new AITurn(ui, allPieces, playerColour);
+                aiTurn.MakeMove();
+            }
         }
     }
 

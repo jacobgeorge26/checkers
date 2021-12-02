@@ -1,5 +1,6 @@
 import Classes.*;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -26,13 +27,12 @@ public class PlayerTurn extends TurnHelpers {
             for(Turn t : possibleMoves){
                 t.piece.isOption = true;
             }
-        }
-        else{
-            //TODO: warning to select a valid player's piece
+            if(possibleMoves.size() == 0){
+                ui.ShowMessage("This piece is trapped - no moves possible", Color.orange);
+            }
         }
     }
 
-    //TODO: what if it reaches the edge and becomes a king halfway through?
     public List<Turn> Search(Piece piece, MoveType legalMoveType, List<Turn> moves, Turn existingTurn) {
         if(legalMoveType == MoveType.Jump || legalMoveType == MoveType.Both){
             List<Node> jumpMoves = FilterMoves(piece, piece.possibleMoves, MoveType.Jump);
@@ -95,7 +95,8 @@ public class PlayerTurn extends TurnHelpers {
     public void ChooseMove(Piece piece) {
         List<Turn> matchingTurns = possibleMoves.stream().filter(t -> t.piece.getLocation() == piece.getLocation()).collect(Collectors.toList());
         //no matching turns
-        if(matchingTurns.size() == 0){//TODO: warning that this move in invalid
+        if(matchingTurns.size() == 0){
+            ui.ShowMessage("This is not a valid move", Color.orange);
             ClearSelectedPiece(turn);
         }
         else {

@@ -1,5 +1,6 @@
 import Classes.*;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -113,5 +114,11 @@ public class TurnHelpers {
             if(!isWon) return false;
         }
         return isWon;
+    }
+
+    //TODO: reset game
+    protected void GameOver(boolean playerWon){
+        String message = playerWon ? "Congratulations! You won!" : "The AI won!";
+        ui.ShowMessage(message, Color.GREEN);
     }
 }

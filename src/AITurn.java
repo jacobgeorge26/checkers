@@ -1,5 +1,6 @@
 import Classes.*;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -49,7 +50,8 @@ public class AITurn extends TurnHelpers{
             }
         }
         if(bestTurn == null || bestTurn.score == 0){
-            //TODO: warning - no turns possible - switch player
+            ui.ShowMessage("The AI has no possible moves", Color.orange);
+            GameOver(true);
         }
 
         System.out.println("MOVING piece " + bestTurn.origin.getLocation() + " to piece " + bestTurn.piece.getLocation());
@@ -101,7 +103,7 @@ public class AITurn extends TurnHelpers{
                 Optional<Node> capturedNode = piece.possibleMoves.stream()
                         .filter(p -> p.direction == nextNode.direction).findFirst();
                 if(!capturedNode.isPresent()){
-                    //TODO: error
+                    ui.ShowMessage("There has been an error in AITurn/Minimax/JumpingMoves. The captured piece cannot be found.", Color.red);
                 }
                 else{
                     turn.capturedPieces.add(allPieces[capturedNode.get().pieceLocation]);
