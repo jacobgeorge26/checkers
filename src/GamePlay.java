@@ -28,6 +28,8 @@ public class GamePlay {
 
     private boolean isPlayerTurn = false;
 
+    protected boolean isPaused = false;
+
     public GamePlay(UI _ui, Piece[] _allPieces, PieceColour _playerColour) {
         ui = _ui;
         allPieces = _allPieces;
@@ -43,10 +45,11 @@ public class GamePlay {
 
     public void pieceClicked(Piece piece) {
         //is it the player's turn?
-        if(playerTurn != null && !isPlayerTurn) {
-            ui.ShowMessage("The AI is thinking", Color.ORANGE);
+        if((playerTurn != null && !isPlayerTurn) || isPaused) {
+            ui.ShowMessage("The AI is thinking...", Color.darkGray);
             return;
         }
+
 
 
         //are they clicking the first button?
@@ -87,8 +90,9 @@ public class GamePlay {
 
 
     private void AI(){
+        isPaused = true;
         ui.ShowMessage("The AI is thinking...", Color.darkGray);
-        aiTurn = new AITurn(ui, allPieces, playerColour);
+        aiTurn = new AITurn(ui, allPieces, playerColour, this);
         aiTurn.MakeMove();
         isPlayerTurn = !isPlayerTurn;
     }

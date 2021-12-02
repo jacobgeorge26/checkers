@@ -11,16 +11,16 @@ import java.util.Optional;
 public class AITurn extends TurnHelpers{
 
     protected static int aiDepth;
-    private long startTime;
+    private GamePlay game;
 
 
-    public AITurn(UI _ui, Piece[] _allPieces, PieceColour _playerColour) {
+    public AITurn(UI _ui, Piece[] _allPieces, PieceColour _playerColour, GamePlay _game) {
         super(_ui, _allPieces, _playerColour);
+        game = _game;
         isPlayerTurn = false;
     }
 
     public void MakeMove(){
-        startTime = System.nanoTime();
         //pieces with a player piece adjacent
         List<Piece> highPriority = new ArrayList<>();
         //pieces with an empty space adjacent
@@ -66,9 +66,8 @@ public class AITurn extends TurnHelpers{
                     new java.util.TimerTask() {
                         @Override
                         public void run() {
-                            System.out.println("here");
                             CompleteTurn(finalBestTurn);
-//                            ui.ShowMessage("", Color.darkGray);
+                            game.isPaused = false;
                         }
                     },
                     1500
