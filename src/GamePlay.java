@@ -20,17 +20,26 @@ public class GamePlay {
 
     private AITurn aiTurn;
 
-    private PieceColour playerColour = PieceColour.red;
+    private PieceColour playerColour;
 
-    public GamePlay(UI _ui, Piece[] _allPieces) {
+    private boolean isPlayerTurn = false;
+
+    public GamePlay(UI _ui, Piece[] _allPieces, PieceColour _playerColour) {
         ui = _ui;
         allPieces = _allPieces;
+        playerColour = _playerColour;
         UpdateDifficulty(Difficulty.Medium);
+        if(playerColour == PieceColour.white){
+            AI();
+        }
+        else{
+            isPlayerTurn = true;
+        }
     }
 
     public void pieceClicked(Piece piece) {
         //is it the player's turn?
-        if(playerTurn != null && !playerTurn.isPlayerTurn) {
+        if(playerTurn != null && !isPlayerTurn) {
             ui.ShowMessage("The AI is thinking", Color.ORANGE);
             return;
         }
@@ -66,12 +75,18 @@ public class GamePlay {
             else{
                 playerTurn.ChooseMove(piece);
                 playerTurn = null;
-                aiTurn = new AITurn(ui, allPieces, playerColour);
-                aiTurn.MakeMove();
+                isPlayerTurn = !isPlayerTurn;
+                AI();
             }
         }
     }
 
+
+    private void AI(){
+        aiTurn = new AITurn(ui, allPieces, playerColour);
+        aiTurn.MakeMove();
+        isPlayerTurn = !isPlayerTurn;
+    }
 
 
 
@@ -89,10 +104,5 @@ public class GamePlay {
                 AITurn.aiDepth = 4;
                 break;
         }
-    }
-
-    //TODO: implement this
-    public void ResetGame(PieceColour playerColour) {
-        ui.ShowMessage("Starting again as " + playerColour.name(), Color.magenta);
     }
 }

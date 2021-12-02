@@ -16,14 +16,15 @@ public class UI implements ActionListener {
     public JPanel rootPanel;
     private int gridSize;
     private Piece[] pieces;
-    protected GamePlay game;
+    protected Controller controller;
     protected PieceColour playerColour;
     private JCheckBoxMenuItem[] aiDiffs = new JCheckBoxMenuItem[3];
     private JMenu reset;
     private JTextField messageBox;
 
-    public UI(PieceColour _playerColour) {
+    public UI(PieceColour _playerColour, Controller _controller) {
         playerColour = _playerColour;
+        controller = _controller;
         Board board = new Board();
         gridSize = board.getGridSize();
         pieces = new Piece[(gridSize * gridSize/ 2) + 1];
@@ -57,11 +58,11 @@ public class UI implements ActionListener {
                 if(index < gridSize * 3)
                 {
                     piece.isActive = true;
-                    piece.isPlayer = false;
+                    piece.isPlayer = playerColour == PieceColour.white;
                 }
                 else if(index + 1 > (gridSize * gridSize) - (3 * gridSize)){
                     piece.isActive = true;
-                    piece.isPlayer = true;
+                    piece.isPlayer = playerColour == PieceColour.red;
                 }
                 else{
                     piece.isActive = false;
@@ -71,7 +72,7 @@ public class UI implements ActionListener {
                 pieceButton.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        game.pieceClicked(piece);
+                        controller.ClickPiece(piece);
                     }
                 });
 
@@ -163,13 +164,21 @@ public class UI implements ActionListener {
             piece.button.SetColour(new Color(0, 125, 0));
         }
         else if(piece.isActive && piece.isPlayer && piece.isSelected){
-            piece.button.SetColour(new Color(125, 0, 0));
+            if(playerColour == PieceColour.red){
+                piece.button.SetColour(new Color(125, 0, 0));
+            }
+            else{
+                piece.button.SetColour(new Color(128, 128, 128));
+            }
         }
-        else if (piece.isActive && piece.isPlayer){
-            piece.button.SetColour(new Color(255, 0, 0));
-        }
-        else if(piece.isActive && !piece.isPlayer){
-            piece.button.SetColour(new Color(255, 255, 255));
+        else if (piece.isActive){
+            if((piece.isPlayer && playerColour == PieceColour.red) || (!piece.isPlayer && playerColour == PieceColour.white)){
+                piece.button.SetColour(new Color(255, 0, 0));
+            }
+            else{
+                piece.button.SetColour(new Color(255, 255, 255));
+            }
+
         }
         else{
             piece.button.SetColour(new Color(0, 0, 0));
@@ -206,21 +215,21 @@ public class UI implements ActionListener {
             aiDiffs[0].setState(true);
             aiDiffs[1].setState(false);
             aiDiffs[2].setState(false);
-            game.UpdateDifficulty(Difficulty.Easy);
+            controller.UpdateDifficulty(Difficulty.Easy);
         }
         else if(source == aiDiffs[1]){
             //medium AI
             aiDiffs[0].setState(false);
             aiDiffs[1].setState(true);
             aiDiffs[2].setState(false);
-            game.UpdateDifficulty(Difficulty.Medium);
+            controller.UpdateDifficulty(Difficulty.Medium);
         }
         else if(source == aiDiffs[2]){
             //hard AI
             aiDiffs[0].setState(false);
             aiDiffs[1].setState(false);
             aiDiffs[2].setState(true);
-            game.UpdateDifficulty(Difficulty.Hard);
+            controller.UpdateDifficulty(Difficulty.Hard);
         }
         //Reset options
         else if(source == reset.getItem(0)){
@@ -229,7 +238,7 @@ public class UI implements ActionListener {
                     "You will lose any progress you have made.", "Reset Game?",
                     JOptionPane.YES_NO_OPTION);
             if(n == 0){
-                game.ResetGame(PieceColour.red);
+                controller.ResetGame(playerColour);
             }
         }
         else if(source == reset.getItem(1)){
@@ -240,9 +249,13 @@ public class UI implements ActionListener {
             if(n == 0){
                 //swap colour
                 playerColour = playerColour == PieceColour.red ? PieceColour.white : PieceColour.red;
-                game.ResetGame(playerColour);
+                controller.ResetGame(playerColour);
             }
         }
+    }
+
+    protected JFrame GetFrame() {
+        return frame;
     }
 }
 

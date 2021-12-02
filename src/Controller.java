@@ -1,37 +1,40 @@
-import Classes.Direction;
-import Classes.Node;
-import Classes.Piece;
-import Classes.PieceColour;
+import Classes.*;
 
+import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowEvent;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.ArrayList;
 
 public class Controller {
+    private UI ui;
     private GamePlay game;
     public static void main(String[] args) {
-        new Controller();
+        new Controller(PieceColour.white);
     }
+    private PieceColour defaultPlayerColour;
 
-    public Controller() {
+    public Controller(PieceColour _playerColour) {
+        defaultPlayerColour = _playerColour;
         //create board - setup pieces
-        UI checkers = new UI(PieceColour.red);
-        //create game
-        game = new GamePlay(checkers, checkers.GetPieces());
-        //give game controller to UI (to invoke event method)
-        checkers.game = game;
+        //give game controller to UI (to create bridge to invoke event methods)
+        ui = new UI(defaultPlayerColour, this);
         //create tree for game controller to search
-        CreateTree();
+        Piece[] allPieces = ui.GetPieces();;
+        CreateTree(allPieces);
+        //create game
+        game = new GamePlay(ui, allPieces, defaultPlayerColour);
     }
 
 
 
 
 
-    private void CreateTree() {
-        for(int i = 1; i < game.allPieces.length; i++){
-            Piece p = game.allPieces[i];
+    private void CreateTree(Piece[] pieces) {
+        for(int i = 1; i < pieces.length; i++){
+            Piece p = pieces[i];
             int loc = p.getLocation();
             int x = p.getCol(), y = p.getRow(), g = p.getGridSize();
             int[] indexes = y % 2 == 0 ? new int[]{-5, -4, 3, 4} : new int[]{-4, -3, 4, 5};
@@ -43,4 +46,17 @@ public class Controller {
     }
 
 
+    protected void ClickPiece(Piece piece) {
+        game.pieceClicked(piece);
+    }
+
+    public void UpdateDifficulty(Difficulty diff) {
+        game.UpdateDifficulty(diff);
+    }
+
+    public void ResetGame(PieceColour playerColour) {
+        new Controller(playerColour);
+        JFrame currentFrame = ui.GetFrame();
+        currentFrame.dispatchEvent(new WindowEvent(currentFrame, WindowEvent.WINDOW_CLOSING));
+    }
 }

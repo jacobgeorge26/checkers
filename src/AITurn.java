@@ -53,9 +53,10 @@ public class AITurn extends TurnHelpers{
             ui.ShowMessage("The AI has no possible moves", Color.orange);
             GameOver(true);
         }
-
-        System.out.println("MOVING piece " + bestTurn.origin.getLocation() + " to piece " + bestTurn.piece.getLocation());
-        CompleteTurn(bestTurn);
+        else{
+            System.out.println("MOVING piece " + bestTurn.origin.getLocation() + " to piece " + bestTurn.piece.getLocation());
+            CompleteTurn(bestTurn);
+        }
     }
 
 

@@ -43,8 +43,14 @@ public class TurnHelpers {
     }
 
     private boolean IsValidDirection(Node n, Piece p){
-        if (isPlayerTurn && ((n.direction == Direction.UpLeft || n.direction == Direction.UpRight) || p.isKing)) return true;
-        else if(!isPlayerTurn && ((n.direction == Direction.DownLeft || n.direction == Direction.DownRight) || p.isKing)) return true;
+        if((isPlayerTurn && playerColour == PieceColour.red) || (!isPlayerTurn && playerColour == PieceColour.white) ){
+            //look up
+            return ((n.direction == Direction.UpLeft || n.direction == Direction.UpRight) || p.isKing);
+        }
+        else if((isPlayerTurn && playerColour == PieceColour.white) || (!isPlayerTurn && playerColour == PieceColour.red)){
+            //look down
+            return ((n.direction == Direction.DownLeft || n.direction == Direction.DownRight) || p.isKing);
+        }
         else return false;
     }
 
