@@ -97,9 +97,6 @@ public class AITurn extends TurnHelpers{
             for(int i = 0; i < unexploredJ.size(); i++){
                 Node nextNode = unexploredJ.get(i);
                 Piece nextPiece = allPieces[nextNode.pieceLocation];
-                boolean becomesKing = isKingNow(nextPiece);
-                turn.score += becomesKing && piece.isKing ? 1 : 0; //add to score if this move would make it a king
-                nextPiece.isKing = becomesKing;
 
                 Optional<Node> capturedNode = piece.possibleMoves.stream()
                         .filter(p -> p.direction == nextNode.direction).findFirst();
@@ -107,7 +104,18 @@ public class AITurn extends TurnHelpers{
                     ui.ShowMessage("There has been an error in AITurn/Minimax/JumpingMoves. The captured piece cannot be found.", Color.red);
                 }
                 else{
-                    turn.capturedPieces.add(allPieces[capturedNode.get().pieceLocation]);
+                    Piece capturedPiece = allPieces[capturedNode.get().pieceLocation];
+                    //would this move capture a king?
+                    boolean becomesKing = capturedPiece.isKing;
+                    //bonus point if so, taking away a player's king
+                    turn.score += becomesKing ? 1 : 0;
+                    //would this move take the piece to the edge and make it a king
+                    becomesKing = isKingNow(nextPiece) || becomesKing;
+                    //bonus point if this move turns a normal piece into a king
+                    turn.score += becomesKing && !piece.isKing ? 1 : 0;
+                    nextPiece.isKing = becomesKing;
+
+                    turn.capturedPieces.add(capturedPiece);
                     int eval = Minimax(turn, nextPiece, depth - 1, !isMin, MoveType.Jump);
                     bestValue = Math.min(bestValue, eval);
                 }

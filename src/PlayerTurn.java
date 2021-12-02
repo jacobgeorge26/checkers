@@ -82,7 +82,7 @@ public class PlayerTurn extends TurnHelpers {
                         if(alternativeOrigin == null){
                             nextPiece.isOption = true;
                             ui.UpdateColour(nextPiece);
-                            nextPiece.isKing = isKingNow(nextPiece) || piece.isKing;
+                            nextPiece.isKing = isKingNow(nextPiece) || piece.isKing || capturedPiece.isKing;
                         }
 
                         //update list of possible turns
