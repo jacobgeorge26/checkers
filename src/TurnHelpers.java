@@ -3,6 +3,7 @@ import Classes.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TurnHelpers {
     protected UI ui;
@@ -168,7 +169,33 @@ public class TurnHelpers {
         else if(otherPlayerTrapped){
             GameOver("All pieces are trapped");
         }
+    }
 
+    protected boolean InDanger(Piece piece) {
+        for(Node adjacentNode : piece.possibleMoves){
+            Piece playerPiece = allPieces[adjacentNode.pieceLocation];
+            if(playerPiece.isPlayer != piece.isPlayer && playerPiece.isActive){
+                //this piece is the opposite player and is active - possible threat
+                //get the node that moves the player piece to the passed in piece
+                List<Node> moveNodes = playerPiece.possibleMoves.stream().filter(n -> n.pieceLocation == piece.getLocation()).collect(Collectors.toList());
+                if(moveNodes.isEmpty()){
+                    //TODO: error
+                    continue;
+                }
+                //get the piece that the player piece would move to if it takes the passed in piece
+                List<Node> nextNodes = piece.possibleMoves.stream().filter(n -> n.direction == moveNodes.get(0).direction).collect(Collectors.toList());
+                if(nextNodes.isEmpty()){
+                    //piece is at the edge and the player piece can't take it
+                    continue;
+                }
+                Piece oppositePiece = allPieces[nextNodes.get(0).pieceLocation];
+                if(!oppositePiece.isActive){
+                    return true;
+                }
+
+            }
+        }
+        return false;
     }
 
     protected void GameOver(String message){

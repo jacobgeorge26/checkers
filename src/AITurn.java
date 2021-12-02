@@ -24,7 +24,8 @@ public class AITurn extends TurnHelpers{
         for(Piece p : highPriority){
             Turn turn = new Turn(p);
             //TODO: forced capture is missing possible jumps
-            turn.score = Minimax(turn, p, aiDepth, false, MoveType.Both);
+            //alpha = -1000, beta = +1000
+            turn.score = Minimax(turn, p, aiDepth, MoveType.Jump);
             bestTurn = bestTurn == null || turn.score > bestTurn.score ? turn : bestTurn;
             System.out.println("Piece " + p.getLocation() + " has score " + turn.score);
         }
@@ -33,7 +34,7 @@ public class AITurn extends TurnHelpers{
             List<Piece> lowPriority = GetPriorityPieces(Priority.Low);
             for(Piece p : lowPriority){
                 Turn turn = new Turn(p);
-                turn.score = Minimax(turn, p, aiDepth, true, MoveType.Both);
+                turn.score = Minimax(turn, p, aiDepth, MoveType.Advance);
                 bestTurn = bestTurn == null || turn.score > bestTurn.score ? turn : bestTurn;
                 System.out.println("Piece " + p.getLocation() + " has score " + turn.score);
             }
@@ -60,40 +61,48 @@ public class AITurn extends TurnHelpers{
     }
 
 
-    private int Minimax(Turn turn, Piece piece, int depth, boolean isMin, MoveType moveType) {
+    private int Minimax(Turn turn, Piece piece, int depth, MoveType moveType) {
         //if allowed, get possible advancing moves
-        List<Node> unexploredA = (moveType == MoveType.Advance || moveType == MoveType.Both)
+        List<Node> unexploredA = (moveType == MoveType.Advance)
                 ? FilterMoves(piece, piece.possibleMoves, MoveType.Advance) : new ArrayList<Node>();
         //remove those already explored - for advance only as jumps can return to the same place
         unexploredA.removeIf(n -> turn.explored.contains(n.pieceLocation));
         //if allowed, get possible jumping moves
-        List<Node> unexploredJ = (moveType == MoveType.Jump || moveType == MoveType.Both)
+        List<Node> unexploredJ = (moveType == MoveType.Jump)
                 ? FilterMoves(piece, piece.possibleMoves, MoveType.Jump) : new ArrayList<Node>();
 
         turn.explored.add(piece.getLocation());
         if (depth == 0 || (unexploredA.isEmpty() && unexploredJ.isEmpty())){
             turn.piece = piece;
-            return turn.capturedPieces.isEmpty()
-                    ? moveType == MoveType.Both ? 0 : 1
-                    : 1 + turn.capturedPieces.size() + turn.score;
+            return 1;
+//            return turn.capturedPieces.isEmpty()
+//                    ? moveType == MoveType.Jump ? 0 : 1
+//                    : 1 + turn.capturedPieces.size() + turn.score;
         }
 
-        int bestValue;
-        if (isMin || unexploredJ.isEmpty()){
-            bestValue = -1000;
+        //defensive move - MIN
+        //what moves are available to this piece?
+        //++ move it away from being in danger
+        //-- place it in danger
+        if (moveType == MoveType.Advance){
+            int bestValue = 1000;
             for (int i = 0; i < unexploredA.size(); i++){
                 Piece nextPiece = allPieces[unexploredA.get(i).pieceLocation];
+                
+                boolean isInDanger = InDanger(piece);
 
                 boolean becomesKing = isKingNow(nextPiece);
                 turn.score += becomesKing && piece.isKing ? 1 : 0; //add to score if this move would make it a king
                 nextPiece.isKing = becomesKing;
 
-                int eval = Minimax(turn, nextPiece, depth - 1, !isMin, MoveType.Neither);
-                bestValue = Math.max(bestValue, eval);
+                int eval = Minimax(turn, nextPiece, depth - 1, MoveType.Neither);
+                bestValue = Math.min(bestValue, eval);
             }
+            return bestValue;
         }
-        else if(!isMin || unexploredA.isEmpty()){
-            bestValue = 1000;
+        //attacking move - MAX
+        else if(moveType == MoveType.Jump){
+            int bestValue = -1000;
             for(int i = 0; i < unexploredJ.size(); i++){
                 Node nextNode = unexploredJ.get(i);
                 Piece nextPiece = allPieces[nextNode.pieceLocation];
@@ -116,17 +125,17 @@ public class AITurn extends TurnHelpers{
                     nextPiece.isKing = becomesKing;
 
                     turn.capturedPieces.add(capturedPiece);
-                    int eval = Minimax(turn, nextPiece, depth - 1, !isMin, MoveType.Jump);
-                    bestValue = Math.min(bestValue, eval);
+                    int eval = Minimax(turn, nextPiece, depth - 1, MoveType.Jump);
+                    bestValue = Math.max(bestValue, eval);
                 }
             }
+            return bestValue;
         }
         else{
             //this should never be reached
             ui.ShowMessage("There has been an error in AITurn/MiniMax. No valid moves were found and this situation was not handled correctly", Color.red);
             return 0;
         }
-        return bestValue;
     }
 
 }
