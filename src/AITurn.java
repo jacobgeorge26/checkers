@@ -77,24 +77,19 @@ public class AITurn extends TurnHelpers{
 
     private int Min(Turn turn, int depth, int alpha, int beta) {
         return -1;
-//        //remove those already explored - for advance only as jumps can return to the same place
-//        int value = 1000;
-//        for(Node nextNode : unexplored){
-//            Piece nextPiece = allPieces[nextNode.pieceLocation];
-//            turn.score -= 1;
 //            int eval = Minimax(turn, nextPiece, depth - 1, alpha, beta, MoveType.Neither);
 //            value = Math.min(value, eval);
 //            beta = Math.min(beta, value);
 //            if(beta <= alpha){
 //                break;
 //            }
-//        }
-//        return value;
+
     }
 
     private int Max(Turn turn, int depth, int alpha, int beta) {
         int value = -10000;
-        DoMove(turn, false).forEach(m -> turn.changes.add(m));
+        List<Move> moves = DoMove(turn, false);
+        moves.forEach(m -> turn.changes.add(m));
 
         //update score
         //++5 for moving forward
@@ -106,6 +101,8 @@ public class AITurn extends TurnHelpers{
         turn.score += capturedKing ? 5 : 0;
         //++5 for becoming a king
         turn.score += turn.origin.info.isKing != turn.piece.info.isKing && turn.piece.info.isKing ? 5 : 0;
+
+        //TODO: Get all possible moves for the other player now that the move has been completed. test first.
 
         int eval = Minimax(turn, depth - 1, true, alpha, beta);
         value = Math.max(value, eval);

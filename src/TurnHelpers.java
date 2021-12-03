@@ -74,30 +74,28 @@ public class TurnHelpers {
             for(Node nextNode : jumpMoves){
                 Turn newTurn = existingTurn == null ? new Turn(origin) : existingTurn.Clone();
                 Piece nextPiece = allPieces[nextNode.pieceLocation];
-                if(true){
-                    Optional<Node> capturedNode = piece.possibleMoves.stream()
-                            .filter(p -> p.direction == nextNode.direction).findFirst();
-                    Piece capturedPiece = allPieces[capturedNode.get().pieceLocation];
-                    if(!newTurn.capturedPieces.contains(capturedPiece)){
-                        //update nextPiece IF this is not an exploratory exercise
-                        if(updateColour){
-                            nextPiece.isOption = true;
-                            ui.UpdateColour(nextPiece);
-                            nextPiece.info.isKing = isKingNow(nextPiece) || piece.info.isKing || capturedPiece.info.isKing;
-                        }
-
-                        //update list of possible turns
-                        moves.add(newTurn);
-                        newTurn = moves.get(moves.size() - 1); //get the duplicate
-                        newTurn.piece = nextPiece;
-                        newTurn.capturedPieces.add(capturedPiece);
-
-                        //continue search
-                        nextPiece.info.isPlayer = isPlayerTurn;
-                        Search(origin, nextPiece, MoveType.Jump, moves, newTurn, updateColour);
-                        nextPiece.info.isPlayer = !isPlayerTurn;
+                Optional<Node> capturedNode = piece.possibleMoves.stream()
+                        .filter(p -> p.direction == nextNode.direction).findFirst();
+                Piece capturedPiece = allPieces[capturedNode.get().pieceLocation];
+                if(!newTurn.capturedPieces.contains(capturedPiece)){
+                    //update nextPiece IF this is not an exploratory exercise
+                    if(updateColour){
+                        nextPiece.isOption = true;
+                        ui.UpdateColour(nextPiece);
+                        nextPiece.info.isKing = isKingNow(nextPiece) || piece.info.isKing || capturedPiece.info.isKing;
                     }
 
+                    //update list of possible turns
+                    newTurn.moveType = MoveType.Jump;
+                    moves.add(newTurn);
+                    newTurn = moves.get(moves.size() - 1); //get the duplicate
+                    newTurn.piece = nextPiece;
+                    newTurn.capturedPieces.add(capturedPiece);
+
+                    //continue search
+                    nextPiece.info.isPlayer = isPlayerTurn;
+                    Search(origin, nextPiece, MoveType.Jump, moves, newTurn, updateColour);
+                    nextPiece.info.isPlayer = !isPlayerTurn;
                 }
             }
         }
@@ -112,6 +110,7 @@ public class TurnHelpers {
 
                     nextPiece.info.isKing = isKingNow(nextPiece);
 
+                    newTurn.moveType = MoveType.Advance;
                     moves.add(newTurn);
                     if(updateColour){
                         nextPiece.isOption = true;
@@ -145,6 +144,7 @@ public class TurnHelpers {
             //create move for toPiece
             Move n = new Move(turn.piece);
             n.after = new Info(playerMove, true, turn.origin.info.isKing);
+            changes.add(n);
         }
         else if(turn.moveType == MoveType.Jump){
             //create move for fromPiece
@@ -154,10 +154,12 @@ public class TurnHelpers {
             //create move for toPiece
             Move n = new Move(turn.piece);
             n.after = new Info(playerMove, true, turn.piece.info.isKing);
+            changes.add(n);
             //create move for captured piece
             for(Piece p : turn.capturedPieces){
                 Move c = new Move(p);
                 c.after = new Info(false, false, false);
+                changes.add(c);
             }
         }
         else{
