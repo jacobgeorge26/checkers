@@ -1,4 +1,6 @@
 import Classes.*;
+
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -69,8 +71,8 @@ public class AITurn extends TurnHelpers{
             return Min(turn, depth, alpha, beta);
         }
         else{
+            ui.ShowMessage("There has been an error in AITurn/MiniMax. The code has failed to meet the conditions for either min or max.", Color.red);
             return 0;
-            //TODO: error - shouldn't reach this point
         }
     }
 

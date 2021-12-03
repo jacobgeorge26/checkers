@@ -1,4 +1,6 @@
 import Classes.*;
+
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -192,7 +194,7 @@ public class TurnHelpers {
             }
         }
         else{
-            //TODO: error - should be advance or jump
+            ui.ShowMessage("There has been an error in TurnHelpers/DoMove. The MoveType passed in was invalid.", Color.red);
         }
         return changes;
     }
@@ -298,6 +300,9 @@ public class TurnHelpers {
         }
     }
 
+    //legacy - returned whether a given piece was in danger
+    //was fun to write so leaving in, in case I decide to add to the AI
+    //probably not needed with how MIN is set up
     protected boolean InDanger(Piece piece) {
         for(Node adjacentNode : piece.possibleMoves){
             Piece playerPiece = allPieces[adjacentNode.pieceLocation];
@@ -306,7 +311,7 @@ public class TurnHelpers {
                 //get the node that moves the player piece to the passed in piece
                 List<Node> moveNodes = playerPiece.possibleMoves.stream().filter(n -> n.pieceLocation == piece.getLocation()).collect(Collectors.toList());
                 if(moveNodes.isEmpty()){
-                    //TODO: error
+                    ui.ShowMessage("There has been an error in TurnHelpers/InDanger. moveNodes is empty.", Color.red);
                     continue;
                 }
                 //get the piece that the player piece would move to if it takes the passed in piece
@@ -319,7 +324,6 @@ public class TurnHelpers {
                 if(!oppositePiece.info.isActive){
                     return true;
                 }
-
             }
         }
         return false;
