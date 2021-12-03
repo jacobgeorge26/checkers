@@ -60,7 +60,7 @@ public class GamePlay {
         //are they clicking the first button?
         if (playerTurn == null){
             //have they clicked one of their pieces?
-            if(!piece.isActive || !piece.isPlayer){
+            if(!piece.info.isActive || !piece.info.isPlayer){
                 ui.ShowMessage("Select one of your pieces", Color.red);
             }
             else{
@@ -76,7 +76,7 @@ public class GamePlay {
         //are they clicking the second button?
         else if(playerTurn != null){
             //have they selected an empty square?
-            if(piece.isActive){
+            if(piece.info.isActive){
                 ui.ShowMessage("Select an empty square", Color.red);
             }
             //have they selected one of the valid moves?
@@ -112,13 +112,13 @@ public class GamePlay {
         aiDifficulty = diff;
         switch(aiDifficulty){
             case Easy:
-                AITurn.aiDepth = 2;
+                AITurn.aiDepth = 1;
                 break;
             case Medium:
-                AITurn.aiDepth = 3;
+                AITurn.aiDepth = 2;
                 break;
             case Hard:
-                AITurn.aiDepth = 4;
+                AITurn.aiDepth = 3;
                 break;
         }
     }

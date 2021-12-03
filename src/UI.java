@@ -58,16 +58,16 @@ public class UI implements ActionListener {
                 RoundButton pieceButton = new RoundButton();
                 if(index < gridSize * 3)
                 {
-                    piece.isActive = true;
-                    piece.isPlayer = playerColour == PieceColour.white;
+                    piece.info.isActive = true;
+                    piece.info.isPlayer = playerColour == PieceColour.white;
                 }
                 else if(index + 1 > (gridSize * gridSize) - (3 * gridSize)){
-                    piece.isActive = true;
-                    piece.isPlayer = playerColour == PieceColour.red;
+                    piece.info.isActive = true;
+                    piece.info.isPlayer = playerColour == PieceColour.red;
                 }
                 else{
-                    piece.isActive = false;
-                    piece.isPlayer = false;
+                    piece.info.isActive = false;
+                    piece.info.isPlayer = false;
                 }
                 //setup event handler
                 pieceButton.addActionListener(new ActionListener() {
@@ -178,7 +178,7 @@ public class UI implements ActionListener {
         {
             piece.button.SetColour(new Color(0, 125, 0));
         }
-        else if(piece.isActive && piece.isPlayer && piece.isSelected){
+        else if(piece.info.isActive && piece.info.isPlayer && piece.isSelected){
             if(playerColour == PieceColour.red){
                 piece.button.SetColour(new Color(125, 0, 0));
             }
@@ -186,8 +186,8 @@ public class UI implements ActionListener {
                 piece.button.SetColour(new Color(128, 128, 128));
             }
         }
-        else if (piece.isActive){
-            if((piece.isPlayer && playerColour == PieceColour.red) || (!piece.isPlayer && playerColour == PieceColour.white)){
+        else if (piece.info.isActive){
+            if((piece.info.isPlayer && playerColour == PieceColour.red) || (!piece.info.isPlayer && playerColour == PieceColour.white)){
                 piece.button.SetColour(new Color(255, 0, 0));
             }
             else{
@@ -201,7 +201,7 @@ public class UI implements ActionListener {
     }
 
     private void DisplayKingIcon(Piece piece) {
-        if(piece.isKing && !piece.isOption){
+        if(piece.info.isKing && !piece.isOption){
             try{
                 Image img = ImageIO.read(getClass().getResource("king.png"));
                 Image newimg = img.getScaledInstance( piece.button.GetSize() / 2, piece.button.GetSize() / 2,  java.awt.Image.SCALE_SMOOTH ) ;

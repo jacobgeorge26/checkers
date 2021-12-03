@@ -14,7 +14,11 @@ public class Turn {
 
     public List<Piece> capturedPieces = new LinkedList<Piece>();
 
+    public List<Move> changes = new ArrayList<Move>();
+
     public List<Integer> explored = new ArrayList<>();
+
+    public MoveType moveType = MoveType.Neither;
 
     public int score = 0;
 

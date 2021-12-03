@@ -7,6 +7,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class AITurn extends TurnHelpers{
 
@@ -18,26 +19,20 @@ public class AITurn extends TurnHelpers{
     }
 
     public void MakeMove(){
-        //start with any potential jump moves
-        List<Piece> highPriority = GetPriorityPieces(Priority.High);
-        Turn bestTurn = null;
-        for(Piece p : highPriority){
-            Turn turn = new Turn(p);
-            //TODO: forced capture is missing possible jumps
-            //alpha = -1000, beta = +1000
-            turn.score = Minimax(turn, p, aiDepth, MoveType.Jump);
-            bestTurn = bestTurn == null || turn.score > bestTurn.score ? turn : bestTurn;
-            System.out.println("Piece " + p.getLocation() + " has score " + turn.score);
+        //get all possible turns
+        List<Turn> allTurns = new ArrayList<>();
+        List<Piece> potentialTurns = GetPriorityPieces(Priority.Both);
+        for(Piece p : potentialTurns){
+            List<Turn> pTurns = new ArrayList<Turn>();
+            pTurns = Search(p, p, MoveType.Both, pTurns, null, false);
+            pTurns.forEach(t -> allTurns.add(t));
         }
-        if(bestTurn == null || bestTurn.score < 2){
-            //no jump moves possible, get low priority moves
-            List<Piece> lowPriority = GetPriorityPieces(Priority.Low);
-            for(Piece p : lowPriority){
-                Turn turn = new Turn(p);
-                turn.score = Minimax(turn, p, aiDepth, MoveType.Advance);
-                bestTurn = bestTurn == null || turn.score > bestTurn.score ? turn : bestTurn;
-                System.out.println("Piece " + p.getLocation() + " has score " + turn.score);
-            }
+
+        Turn bestTurn = null;
+        for(Turn turn : allTurns){
+            turn.score = Minimax(turn, aiDepth, true,-1000, 1000);
+            bestTurn = bestTurn == null || turn.score > bestTurn.score ? turn : bestTurn;
+            System.out.println("Piece " + turn.origin.getLocation() + " has score " + turn.score);
         }
         if(bestTurn == null || bestTurn.score == 0){
             isPlayerTurn = !isPlayerTurn;
@@ -61,81 +56,69 @@ public class AITurn extends TurnHelpers{
     }
 
 
-    private int Minimax(Turn turn, Piece piece, int depth, MoveType moveType) {
-        //if allowed, get possible advancing moves
-        List<Node> unexploredA = (moveType == MoveType.Advance)
-                ? FilterMoves(piece, piece.possibleMoves, MoveType.Advance) : new ArrayList<Node>();
-        //remove those already explored - for advance only as jumps can return to the same place
-        unexploredA.removeIf(n -> turn.explored.contains(n.pieceLocation));
-        //if allowed, get possible jumping moves
-        List<Node> unexploredJ = (moveType == MoveType.Jump)
-                ? FilterMoves(piece, piece.possibleMoves, MoveType.Jump) : new ArrayList<Node>();
-
-        turn.explored.add(piece.getLocation());
-        if (depth == 0 || (unexploredA.isEmpty() && unexploredJ.isEmpty())){
-            turn.piece = piece;
-            return 1;
-//            return turn.capturedPieces.isEmpty()
-//                    ? moveType == MoveType.Jump ? 0 : 1
-//                    : 1 + turn.capturedPieces.size() + turn.score;
+    private int Minimax(Turn turn, int depth, boolean isMaximising, int alpha, int beta) {
+        //TERMINAL NODE
+        if (depth == 0) {
+            return turn.score;
         }
-
-        //defensive move - MIN
-        //what moves are available to this piece?
-        //++ move it away from being in danger
-        //-- place it in danger
-        if (moveType == MoveType.Advance){
-            int bestValue = 1000;
-            for (int i = 0; i < unexploredA.size(); i++){
-                Piece nextPiece = allPieces[unexploredA.get(i).pieceLocation];
-                
-                boolean isInDanger = InDanger(piece);
-
-                boolean becomesKing = isKingNow(nextPiece);
-                turn.score += becomesKing && piece.isKing ? 1 : 0; //add to score if this move would make it a king
-                nextPiece.isKing = becomesKing;
-
-                int eval = Minimax(turn, nextPiece, depth - 1, MoveType.Neither);
-                bestValue = Math.min(bestValue, eval);
-            }
-            return bestValue;
+        //MAX
+        if (isMaximising) {
+            return Max(turn, depth, alpha, beta);
         }
-        //attacking move - MAX
-        else if(moveType == MoveType.Jump){
-            int bestValue = -1000;
-            for(int i = 0; i < unexploredJ.size(); i++){
-                Node nextNode = unexploredJ.get(i);
-                Piece nextPiece = allPieces[nextNode.pieceLocation];
-
-                Optional<Node> capturedNode = piece.possibleMoves.stream()
-                        .filter(p -> p.direction == nextNode.direction).findFirst();
-                if(!capturedNode.isPresent()){
-                    ui.ShowMessage("There has been an error in AITurn/Minimax/JumpingMoves. The captured piece cannot be found.", Color.red);
-                }
-                else{
-                    Piece capturedPiece = allPieces[capturedNode.get().pieceLocation];
-                    //would this move capture a king?
-                    boolean becomesKing = capturedPiece.isKing;
-                    //bonus point if so, taking away a player's king
-                    turn.score += becomesKing ? 1 : 0;
-                    //would this move take the piece to the edge and make it a king
-                    becomesKing = isKingNow(nextPiece) || becomesKing;
-                    //bonus point if this move turns a normal piece into a king
-                    turn.score += becomesKing && !piece.isKing ? 1 : 0;
-                    nextPiece.isKing = becomesKing;
-
-                    turn.capturedPieces.add(capturedPiece);
-                    int eval = Minimax(turn, nextPiece, depth - 1, MoveType.Jump);
-                    bestValue = Math.max(bestValue, eval);
-                }
-            }
-            return bestValue;
+        //MIN
+        else if (!isMaximising) {
+            return Min(turn, depth, alpha, beta);
         }
         else{
-            //this should never be reached
-            ui.ShowMessage("There has been an error in AITurn/MiniMax. No valid moves were found and this situation was not handled correctly", Color.red);
             return 0;
+            //TODO: error - shouldn't reach this point
         }
     }
+
+    private int Min(Turn turn, int depth, int alpha, int beta) {
+        return -1;
+//        //remove those already explored - for advance only as jumps can return to the same place
+//        int value = 1000;
+//        for(Node nextNode : unexplored){
+//            Piece nextPiece = allPieces[nextNode.pieceLocation];
+//            turn.score -= 1;
+//            int eval = Minimax(turn, nextPiece, depth - 1, alpha, beta, MoveType.Neither);
+//            value = Math.min(value, eval);
+//            beta = Math.min(beta, value);
+//            if(beta <= alpha){
+//                break;
+//            }
+//        }
+//        return value;
+    }
+
+    private int Max(Turn turn, int depth, int alpha, int beta) {
+        int value = -10000;
+        DoMove(turn, false).forEach(m -> turn.changes.add(m));
+
+        //update score
+        //++5 for moving forward
+        turn.score += turn.moveType == MoveType.Advance ? 5 : 0;
+        //++10 for each
+        turn.score += turn.capturedPieces.size() * 10;
+        //++5 for capturing a king
+        boolean capturedKing = turn.capturedPieces.stream().filter(p -> p.info.isKing).collect(Collectors.toList()).size() > 0;
+        turn.score += capturedKing ? 5 : 0;
+        //++5 for becoming a king
+        turn.score += turn.origin.info.isKing != turn.piece.info.isKing && turn.piece.info.isKing ? 5 : 0;
+
+        int eval = Minimax(turn, depth - 1, true, alpha, beta);
+        value = Math.max(value, eval);
+        alpha = Math.max(alpha, value);
+        if(alpha >= beta){
+            UndoMove(turn);
+            return -turn.score;
+        }
+        
+        UndoMove(turn);
+
+        return value;
+    }
+
 
 }

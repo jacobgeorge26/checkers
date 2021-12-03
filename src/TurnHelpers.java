@@ -3,6 +3,7 @@ import Classes.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class TurnHelpers {
@@ -26,17 +27,17 @@ public class TurnHelpers {
     protected List<Piece> GetPriorityPieces(Priority priority) {
         List<Piece> priorityPieces = new ArrayList<>();
         for(Piece p : allPieces){
-            if(p == null || p.isPlayer != isPlayerTurn || !p.isActive){
+            if(p == null || p.info.isPlayer != isPlayerTurn || !p.info.isActive){
                 continue;
             }
             for(Node n : p.possibleMoves){
                 Piece poss = allPieces[n.pieceLocation];
                 //pieces with a player piece adjacent
-                if(poss.isPlayer != isPlayerTurn && poss.isActive && !priorityPieces.contains(p) && priority == Priority.High){
+                if(poss.info.isPlayer != isPlayerTurn && poss.info.isActive && !priorityPieces.contains(p) && priority != Priority.Low){
                     priorityPieces.add(p);
                 }
                 //pieces with an empty space adjacent
-                if(!poss.isActive && !priorityPieces.contains(p) && priority == Priority.Low){
+                if(!poss.info.isActive && !priorityPieces.contains(p) && priority != Priority.High){
                     priorityPieces.add(p);
                 }
             }
@@ -49,15 +50,15 @@ public class TurnHelpers {
         for (Node possN : possibleMoves) {
             if (IsValidDirection(possN, currentPiece)) {
                 Piece possP = allPieces[possN.pieceLocation];
-                if ((moveType == MoveType.Advance || moveType == MoveType.Both) && !possP.isActive) {
+                if ((moveType == MoveType.Advance || moveType == MoveType.Both) && !possP.info.isActive) {
                     filteredMoves.add(possN);
                 }
-                if ((moveType == MoveType.Jump || moveType == MoveType.Both) && possP.isPlayer != currentPiece.isPlayer && possP.isActive) {
+                if ((moveType == MoveType.Jump || moveType == MoveType.Both) && possP.info.isPlayer != currentPiece.info.isPlayer && possP.info.isActive) {
                     Object[] nextNs = possP.possibleMoves.stream().filter(x -> x.direction == possN.direction).toArray();
                     Node nextN = nextNs.length > 0 ? (Node) nextNs[0] : null;
                     if (nextN != null) {
                         Piece nextP = allPieces[nextN.pieceLocation];
-                        if (!nextP.isActive) {
+                        if (!nextP.info.isActive) {
                             filteredMoves.add(nextN);
                         }
                     }
@@ -67,16 +68,111 @@ public class TurnHelpers {
         return filteredMoves;
     }
 
-    private boolean IsValidDirection(Node n, Piece p){
-        if((p.isPlayer && playerColour == PieceColour.red) || (!p.isPlayer && playerColour == PieceColour.white) ){
-            //look up
-            return ((n.direction == Direction.UpLeft || n.direction == Direction.UpRight) || p.isKing);
+    public List<Turn> Search(Piece origin, Piece piece, MoveType legalMoveType, List<Turn> moves, Turn existingTurn, boolean updateColour) {
+        if(legalMoveType == MoveType.Jump || legalMoveType == MoveType.Both){
+            List<Node> jumpMoves = FilterMoves(piece, piece.possibleMoves, MoveType.Jump);
+            for(Node nextNode : jumpMoves){
+                Turn newTurn = existingTurn == null ? new Turn(origin) : existingTurn.Clone();
+                Piece nextPiece = allPieces[nextNode.pieceLocation];
+                if(true){
+                    Optional<Node> capturedNode = piece.possibleMoves.stream()
+                            .filter(p -> p.direction == nextNode.direction).findFirst();
+                    Piece capturedPiece = allPieces[capturedNode.get().pieceLocation];
+                    if(!newTurn.capturedPieces.contains(capturedPiece)){
+                        //update nextPiece IF this is not an exploratory exercise
+                        if(updateColour){
+                            nextPiece.isOption = true;
+                            ui.UpdateColour(nextPiece);
+                            nextPiece.info.isKing = isKingNow(nextPiece) || piece.info.isKing || capturedPiece.info.isKing;
+                        }
+
+                        //update list of possible turns
+                        moves.add(newTurn);
+                        newTurn = moves.get(moves.size() - 1); //get the duplicate
+                        newTurn.piece = nextPiece;
+                        newTurn.capturedPieces.add(capturedPiece);
+
+                        //continue search
+                        nextPiece.info.isPlayer = isPlayerTurn;
+                        Search(origin, nextPiece, MoveType.Jump, moves, newTurn, updateColour);
+                        nextPiece.info.isPlayer = !isPlayerTurn;
+                    }
+
+                }
+            }
         }
-        else if((p.isPlayer && playerColour == PieceColour.white) || (!p.isPlayer && playerColour == PieceColour.red)){
+        //if we're looking for advance moves and there are no jump moves available - forced capture
+        if((legalMoveType == MoveType.Advance || legalMoveType == MoveType.Both) && moves.isEmpty()){
+            List<Node> advanceMoves = FilterMoves(piece, piece.possibleMoves, MoveType.Advance);
+            for (Node nextNode : advanceMoves){
+                Piece nextPiece = allPieces[nextNode.pieceLocation];
+                if(nextPiece != origin){
+                    Turn newTurn = new Turn(origin);
+                    newTurn.piece = nextPiece;
+
+                    nextPiece.info.isKing = isKingNow(nextPiece);
+
+                    moves.add(newTurn);
+                    if(updateColour){
+                        nextPiece.isOption = true;
+                        ui.UpdateColour(nextPiece);
+                    }
+                }
+            }
+        }
+        return moves;
+    }
+
+    private boolean IsValidDirection(Node n, Piece p){
+        if((p.info.isPlayer && playerColour == PieceColour.red) || (!p.info.isPlayer && playerColour == PieceColour.white) ){
+            //look up
+            return ((n.direction == Direction.UpLeft || n.direction == Direction.UpRight) || p.info.isKing);
+        }
+        else if((p.info.isPlayer && playerColour == PieceColour.white) || (!p.info.isPlayer && playerColour == PieceColour.red)){
             //look down
-            return ((n.direction == Direction.DownLeft || n.direction == Direction.DownRight) || p.isKing);
+            return ((n.direction == Direction.DownLeft || n.direction == Direction.DownRight) || p.info.isKing);
         }
         else return false;
+    }
+
+    protected List<Move> DoMove(Turn turn, boolean playerMove) {
+        List<Move> changes = new ArrayList<Move>();
+        if(turn.moveType == MoveType.Advance){
+            //create move for fromPiece
+            Move m = new Move(turn.origin);
+            m.after = new Info(false, false, false);
+            changes.add(m);
+            //create move for toPiece
+            Move n = new Move(turn.piece);
+            n.after = new Info(playerMove, true, turn.origin.info.isKing);
+        }
+        else if(turn.moveType == MoveType.Jump){
+            //create move for fromPiece
+            Move m = new Move(turn.origin);
+            m.after = new Info(false, false, false);
+            changes.add(m);
+            //create move for toPiece
+            Move n = new Move(turn.piece);
+            n.after = new Info(playerMove, true, turn.piece.info.isKing);
+            //create move for captured piece
+            for(Piece p : turn.capturedPieces){
+                Move c = new Move(p);
+                c.after = new Info(false, false, false);
+            }
+        }
+        else{
+            //TODO: error - should be advance or jump
+        }
+        return changes;
+    }
+
+    protected void UndoMove(Turn turn) {
+        while(!turn.changes.isEmpty()){
+            Move m = turn.changes.remove(0);
+            Piece piece = allPieces[m.pieceLocation];
+            piece.info = m.before;
+        }
+
     }
 
     protected boolean isKingNow(Piece piece) {
@@ -93,18 +189,18 @@ public class TurnHelpers {
 
     protected void CompleteTurn(Turn turn) {
         //move player piece
-        turn.piece.isPlayer = isPlayerTurn;
-        turn.piece.isActive = true;
-        turn.piece.isKing = turn.origin.isKing || turn.piece.isKing;
+        turn.piece.info.isPlayer = isPlayerTurn;
+        turn.piece.info.isActive = true;
+        turn.piece.info.isKing = turn.origin.info.isKing || turn.piece.info.isKing;
         ui.UpdateColour(turn.piece);
 
-        turn.origin.isPlayer = false;
-        turn.origin.isActive = false;
-        turn.origin.isKing = false;
+        turn.origin.info.isPlayer = false;
+        turn.origin.info.isActive = false;
+        turn.origin.info.isKing = false;
 
         //clear any captured pieces
         turn.capturedPieces.forEach(p -> {
-            p.isActive = false;
+            p.info.isActive = false;
             ui.UpdateColour(p);
         });
 
@@ -126,7 +222,7 @@ public class TurnHelpers {
         if(possibleMoves != null){
             for(Turn t : possibleMoves){
                 t.piece.isOption = false;
-                t.piece.isKing = t.piece.isActive ? t.piece.isKing :  false;
+                t.piece.info.isKing = t.piece.info.isActive ? t.piece.info.isKing :  false;
                 ui.UpdateColour(t.piece);
             }
         }
@@ -139,17 +235,17 @@ public class TurnHelpers {
         boolean thisPlayerTrapped = true, otherPlayerTrapped = true, otherPlayerCaptured = true;
 
         for(Piece p : allPieces){
-            if(p == null || !p.isActive){
+            if(p == null || !p.info.isActive){
                 continue;
             }
-            else if(p.isActive && p.isPlayer == isPlayerTurn){
+            else if(p.info.isActive && p.info.isPlayer == isPlayerTurn){
                 //are all my pieces trapped?
                 //if so, game over and I've lost
                 if(!FilterMoves(p, p.possibleMoves, MoveType.Both).isEmpty()){
                     thisPlayerTrapped = false;
                 }
             }
-            else if(p.isActive && p.isPlayer != isPlayerTurn){
+            else if(p.info.isActive && p.info.isPlayer != isPlayerTurn){
                 //not all their pieces are captured
                 otherPlayerCaptured = false;
                 //are all their pieces trapped?
@@ -174,7 +270,7 @@ public class TurnHelpers {
     protected boolean InDanger(Piece piece) {
         for(Node adjacentNode : piece.possibleMoves){
             Piece playerPiece = allPieces[adjacentNode.pieceLocation];
-            if(playerPiece.isPlayer != piece.isPlayer && playerPiece.isActive){
+            if(playerPiece.info.isPlayer != piece.info.isPlayer && playerPiece.info.isActive){
                 //this piece is the opposite player and is active - possible threat
                 //get the node that moves the player piece to the passed in piece
                 List<Node> moveNodes = playerPiece.possibleMoves.stream().filter(n -> n.pieceLocation == piece.getLocation()).collect(Collectors.toList());
@@ -189,7 +285,7 @@ public class TurnHelpers {
                     continue;
                 }
                 Piece oppositePiece = allPieces[nextNodes.get(0).pieceLocation];
-                if(!oppositePiece.isActive){
+                if(!oppositePiece.info.isActive){
                     return true;
                 }
 

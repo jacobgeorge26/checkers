@@ -25,7 +25,7 @@ public class PlayerTurn extends TurnHelpers {
         for(Piece p : possibleJumps){
             if(!FilterMoves(p, p.possibleMoves, MoveType.Jump).isEmpty()){
                 possibleMoves = new ArrayList<Turn>();
-                Search(p, MoveType.Jump, possibleMoves, null, p);
+                possibleMoves = Search(turn.origin, p, MoveType.Jump, possibleMoves, null, false);
                 for(Turn t : possibleMoves){
                     if(t.capturedPieces.size() > score){
                         forcePieces = new ArrayList<Piece>(){};
@@ -54,10 +54,10 @@ public class PlayerTurn extends TurnHelpers {
         }
 
         possibleMoves = new ArrayList<Turn>();
-        if(turn.origin.isPlayer && turn.origin.isActive) {
+        if(turn.origin.info.isPlayer && turn.origin.info.isActive) {
             turn.origin.isSelected = true;
             ui.UpdateColour(turn.origin);
-            Search(turn.origin, MoveType.Both, possibleMoves, null, null);
+            possibleMoves = Search(turn.origin, turn.origin, MoveType.Both, possibleMoves, null, true);
             for(Turn t : possibleMoves){
                 t.piece.isOption = true;
             }
@@ -67,59 +67,6 @@ public class PlayerTurn extends TurnHelpers {
         }
     }
 
-    public List<Turn> Search(Piece piece, MoveType legalMoveType, List<Turn> moves, Turn existingTurn, Piece alternativeOrigin) {
-        if(legalMoveType == MoveType.Jump || legalMoveType == MoveType.Both){
-            List<Node> jumpMoves = FilterMoves(piece, piece.possibleMoves, MoveType.Jump);
-            for(Node nextNode : jumpMoves){
-                Turn newTurn = existingTurn == null ? new Turn(alternativeOrigin != null ? alternativeOrigin : turn.origin) : existingTurn.Clone();
-                Piece nextPiece = allPieces[nextNode.pieceLocation];
-                if(true){
-                    Optional<Node> capturedNode = piece.possibleMoves.stream()
-                            .filter(p -> p.direction == nextNode.direction).findFirst();
-                    Piece capturedPiece = allPieces[capturedNode.get().pieceLocation];
-                    if(!newTurn.capturedPieces.contains(capturedPiece)){
-                        //update nextPiece IF this is not an exploratory exercise
-                        if(alternativeOrigin == null){
-                            nextPiece.isOption = true;
-                            ui.UpdateColour(nextPiece);
-                            nextPiece.isKing = isKingNow(nextPiece) || piece.isKing || capturedPiece.isKing;
-                        }
-
-                        //update list of possible turns
-                        moves.add(newTurn);
-                        newTurn = moves.get(moves.size() - 1); //get the duplicate
-                        newTurn.piece = nextPiece;
-                        newTurn.capturedPieces.add(capturedPiece);
-
-                        //continue search
-                        nextPiece.isPlayer = true;
-                        Search(nextPiece, MoveType.Jump, moves, newTurn, alternativeOrigin);
-                        nextPiece.isPlayer = false;
-                    }
-
-                }
-            }
-        }
-        //if we're looking for advance moves and there are no jump moves available - forced capture
-        //TODO: make forced capture an option and include multi-leg jumps
-        if((legalMoveType == MoveType.Advance || legalMoveType == MoveType.Both) && moves.isEmpty()){
-            List<Node> advanceMoves = FilterMoves(piece, piece.possibleMoves, MoveType.Advance);
-            for (Node nextNode : advanceMoves){
-                Piece nextPiece = allPieces[nextNode.pieceLocation];
-                if(nextPiece != turn.origin){
-                    Turn newTurn = new Turn(turn.origin);
-                    newTurn.piece = nextPiece;
-
-                    nextPiece.isKing = isKingNow(nextPiece);
-
-                    moves.add(newTurn);
-                    nextPiece.isOption = true;
-                    ui.UpdateColour(nextPiece);
-                }
-            }
-        }
-        return moves;
-    }
 
     public void RemoveSelection(Piece piece) {
         //clear options
