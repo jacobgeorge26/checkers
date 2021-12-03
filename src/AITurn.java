@@ -15,16 +15,20 @@ public class AITurn extends TurnHelpers{
     public void MakeMove(){
         //get all possible turns
         List<Turn> allTurns = new ArrayList<>();
-        List<Piece> potentialTurns = GetPriorityPieces(Priority.Both, isPlayerTurn);
+        //if forced capture is on then only look at the pieces that have a capture available
+        List<Piece> forcePieces = game.isForcedCapture ? ForcedCapture(isPlayerTurn) : new ArrayList<>();
+        //only look at pieces that have a potential move - less expensive
+        List<Piece> potentialTurns = forcePieces.isEmpty() ? GetPriorityPieces(Priority.Both, isPlayerTurn) : forcePieces;
         for(Piece p : potentialTurns){
             List<Turn> pTurns = new ArrayList<Turn>();
             pTurns = Search(p, p, MoveType.Both, pTurns, null, isPlayerTurn, false);
             pTurns.forEach(t -> allTurns.add(t));
         }
 
+        //for each potential turn, run MINIMAX to explore its score. Run the best scoring move
         Turn bestTurn = null;
         for(Turn turn : allTurns){
-            turn.score = Minimax(turn, aiDepth, true,-1000, 1000);
+            turn.score = Minimax(turn, aiDepth, true,Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
             bestTurn = bestTurn == null || turn.score > bestTurn.score ? turn : bestTurn;
             System.out.println("Piece " + turn.origin.getLocation() + " has score " + turn.score);
         }
@@ -50,7 +54,7 @@ public class AITurn extends TurnHelpers{
     }
 
 
-    private int Minimax(Turn turn, int depth, boolean isMaximising, int alpha, int beta) {
+    private double Minimax(Turn turn, int depth, boolean isMaximising, double alpha, double beta) {
         //TERMINAL NODE
         if (depth == 0) {
             return turn.score;
@@ -69,14 +73,11 @@ public class AITurn extends TurnHelpers{
         }
     }
 
-    private int Min(Turn turn, int depth, int alpha, int beta) {
-        int value = 10000;
+    private double Min(Turn turn, int depth, double alpha, double beta) {
+        double value = Double.POSITIVE_INFINITY;
         List<Move> moves = DoMove(turn, false);
         moves.forEach(m -> turn.changes.add(m));
 
-        if(turn.origin.getLocation() == 18 && turn.piece.getLocation() == 9){
-            System.out.println("here");
-        }
         //update score
         //--10 for each captured piece
         turn.score -= turn.capturedPieces.size() * 10;
@@ -86,20 +87,26 @@ public class AITurn extends TurnHelpers{
         turn.score -= turn.origin.info.isKing != turn.piece.info.isKing && turn.piece.info.isKing ? 5 : 0;
 
         List<Turn> nextTurns = new ArrayList<>();
-        List<Piece> potentialTurns = GetPriorityPieces(Priority.Both, isPlayerTurn);
+        //if forced capture is on then only look at the pieces that have a capture available
+        List<Piece> forcePieces = game.isForcedCapture ? ForcedCapture(!isPlayerTurn) : new ArrayList<>();
+        //only look at pieces that have a potential move - less expensive
+        List<Piece> potentialTurns = forcePieces.isEmpty() ? GetPriorityPieces(Priority.Both, !isPlayerTurn) : forcePieces;
         for(Piece p : potentialTurns){
             List<Turn> pTurns = new ArrayList<Turn>();
-            pTurns = Search(p, p, MoveType.Both, pTurns, null, isPlayerTurn, false);
+            pTurns = Search(p, p, MoveType.Both, pTurns, null, !isPlayerTurn, false);
             pTurns.forEach(t -> nextTurns.add(t));
         }
         for(Turn nextTurn : nextTurns){
-            int eval = turn.score + Minimax(nextTurn, depth - 1, true, alpha, beta);
+            //get the score for this branch (depending on depth it may branch in the next search too - will return best branch)
+            double eval = turn.score + Minimax(nextTurn, depth - 1, true, alpha, beta);
+            //return the move that the player would make - as it advantages them the most
             value = Math.min(value, eval);
+            //alpha-beta pruning
+            //if this branch is already known to disadvantage the player then don't bother looking at the rest of it
             beta = Math.min(beta, value);
             if(beta <= alpha){
                 break;
             }
-            //System.out.println("MIN: Layer " + aiDepth + ";  Piece " + nextTurn.origin.getLocation() + ";   Score " + nextTurn.score);
         }
 
         //undo move otherwise it'd shuffle the board
@@ -108,8 +115,8 @@ public class AITurn extends TurnHelpers{
 
     }
 
-    private int Max(Turn turn, int depth, int alpha, int beta) {
-        int value = -10000;
+    private double Max(Turn turn, int depth, double alpha, double beta) {
+        double value = Double.NEGATIVE_INFINITY;
         List<Move> moves = DoMove(turn, false);
         moves.forEach(m -> turn.changes.add(m));
 
@@ -123,27 +130,28 @@ public class AITurn extends TurnHelpers{
         //++5 for becoming a king
         turn.score += turn.origin.info.isKing != turn.piece.info.isKing && turn.piece.info.isKing ? 5 : 0;
 
-        if(turn.origin.getLocation() == 9 && turn.piece.getLocation() == 14){
-            System.out.println("here");
-        }
-
         List<Turn> nextTurns = new ArrayList<>();
-        List<Piece> potentialTurns = GetPriorityPieces(Priority.Both, !isPlayerTurn);
+        //if forced capture is on then only look at the pieces that have a capture available
+        List<Piece> forcePieces = game.isForcedCapture ? ForcedCapture(isPlayerTurn) : new ArrayList<>();
+        //only look at pieces that have a potential move - less expensive
+        List<Piece> potentialTurns = forcePieces.isEmpty() ? GetPriorityPieces(Priority.Both, isPlayerTurn) : forcePieces;
         for(Piece p : potentialTurns){
             List<Turn> pTurns = new ArrayList<Turn>();
-            pTurns = Search(p, p, MoveType.Both, pTurns, null, !isPlayerTurn, false);
+            pTurns = Search(p, p, MoveType.Both, pTurns, null, isPlayerTurn, false);
             pTurns.forEach(t -> nextTurns.add(t));
         }
         for(Turn nextTurn : nextTurns){
-            int eval = turn.score + Minimax(nextTurn, depth - 1, false,alpha, beta);
+            //get the score for this branch (depending on depth it may branch in the next search too - will return best branch)
+            double eval = turn.score + Minimax(nextTurn, depth - 1, false,alpha, beta);
+            //return the move that the AI would make - as it advantages them the most
             value = Math.max(value, eval);
+            //alpha-beta pruning
+            //if this branch is already known to disadvantage the AI then don't bother looking at the rest of it
             alpha = Math.max(alpha, value);
             if(alpha >= beta){
                 break;
             }
-            //System.out.println("MAX: Layer " + aiDepth + ";  Piece " + nextTurn.origin.getLocation() + ";   Score " + nextTurn.score);
         }
-
         //undo move otherwise it'd shuffle the board
         UndoMove(turn);
         return value;

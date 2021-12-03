@@ -20,7 +20,7 @@ public class Turn {
 
     public MoveType moveType = MoveType.Neither;
 
-    public int score = 0;
+    public double score = 0;
 
     public Turn(Piece _origin) {
         origin = _origin;

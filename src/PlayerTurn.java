@@ -15,36 +15,11 @@ public class PlayerTurn extends TurnHelpers {
         isPlayerTurn = true;
     }
 
-    private List<Piece> ForcedCapture() {
-        List<Piece> possibleJumps = GetPriorityPieces(Priority.High, isPlayerTurn);
-        List<Piece> forcePieces = new ArrayList<Piece>();
-        int score = 0;
-        //go through each potential jump to see if it is a viable move
-        for(Piece p : possibleJumps){
-            if(!FilterMoves(p, p.possibleMoves, MoveType.Jump).isEmpty()){
-                possibleMoves = new ArrayList<Turn>();
-                possibleMoves = Search(turn.origin, p, MoveType.Jump, possibleMoves, null, isPlayerTurn, false);
-                for(Turn t : possibleMoves){
-                    if(t.capturedPieces.size() > score){
-                        forcePieces = new ArrayList<Piece>(){};
-                        forcePieces.add(t.origin);
-                        score = t.capturedPieces.size();
-                    }
-                    else if(t.capturedPieces.size() == score){
-                        forcePieces.add(t.origin);
-                    }
-                }
-            }
-        }
-        possibleMoves = null;
-        return forcePieces;
-    }
-
     protected void ShowOptions(){
         //if forced capture then check for any pieces that need to capture
         if(game.isForcedCapture){
-            List<Piece> forcePiece = ForcedCapture();
-            if(!forcePiece.isEmpty() && !forcePiece.contains(turn.origin)){
+            List<Piece> forcePieces = ForcedCapture(isPlayerTurn);
+            if(!forcePieces.isEmpty() && !forcePieces.contains(turn.origin)){
                 ui.ShowMessage("Forced capture is turned on and there is a possible capture", Color.orange);
                 game.RestartMove(turn.origin);
                 return;

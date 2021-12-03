@@ -22,6 +22,30 @@ public class TurnHelpers {
         playerColour = _playerColour;
     }
 
+    protected List<Piece> ForcedCapture(boolean isPlayer) {
+        List<Piece> possibleJumps = GetPriorityPieces(Priority.High, isPlayer);
+        List<Piece> forcePieces = new ArrayList<Piece>();
+        int score = 0;
+        //go through each potential jump to see if it is a viable move
+        for(Piece p : possibleJumps){
+            if(!FilterMoves(p, p.possibleMoves, MoveType.Jump).isEmpty()){
+                List<Turn> possibleMoves = new ArrayList<Turn>();
+                possibleMoves = Search(p, p, MoveType.Jump, possibleMoves, null, isPlayer, false);
+                for(Turn t : possibleMoves){
+                    if(t.capturedPieces.size() > score){
+                        forcePieces = new ArrayList<Piece>(){};
+                        forcePieces.add(t.origin);
+                        score = t.capturedPieces.size();
+                    }
+                    else if(t.capturedPieces.size() == score){
+                        forcePieces.add(t.origin);
+                    }
+                }
+            }
+        }
+        return forcePieces;
+    }
+
     protected List<Piece> GetPriorityPieces(Priority priority, boolean isPlayer) {
         List<Piece> priorityPieces = new ArrayList<>();
         for(Piece p : allPieces){
