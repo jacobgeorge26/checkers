@@ -74,9 +74,16 @@ public class AITurn extends TurnHelpers{
         List<Move> moves = DoMove(turn, false);
         moves.forEach(m -> turn.changes.add(m));
 
+        if(turn.origin.getLocation() == 18 && turn.piece.getLocation() == 9){
+            System.out.println("here");
+        }
         //update score
-        //--5 for being vulnerable
-        //--10 for being captured
+        //--10 for each captured piece
+        turn.score -= turn.capturedPieces.size() * 10;
+        //--5 for each captured king
+        turn.score -= turn.capturedPieces.stream().filter(p -> p.info.isKing).collect(Collectors.toList()).size() * 5;
+        //--5 for becoming a king
+        turn.score -= turn.origin.info.isKing != turn.piece.info.isKing && turn.piece.info.isKing ? 5 : 0;
 
         List<Turn> nextTurns = new ArrayList<>();
         List<Piece> potentialTurns = GetPriorityPieces(Priority.Both, isPlayerTurn);
@@ -86,13 +93,13 @@ public class AITurn extends TurnHelpers{
             pTurns.forEach(t -> nextTurns.add(t));
         }
         for(Turn nextTurn : nextTurns){
-            int eval = turn.score + Minimax(nextTurn, aiDepth - 1, true,alpha, beta);
+            int eval = turn.score + Minimax(nextTurn, depth - 1, true, alpha, beta);
             value = Math.min(value, eval);
             beta = Math.min(beta, value);
             if(beta <= alpha){
                 break;
             }
-            System.out.println("Layer " + aiDepth + ";  Piece " + nextTurn.origin.getLocation() + ";   Score " + nextTurn.score);
+            System.out.println("MIN: Layer " + aiDepth + ";  Piece " + nextTurn.origin.getLocation() + ";   Score " + nextTurn.score);
         }
 
         //undo move otherwise it'd shuffle the board
@@ -109,11 +116,10 @@ public class AITurn extends TurnHelpers{
         //update score
         //++5 for moving forward
         turn.score += turn.moveType == MoveType.Advance ? 5 : 0;
-        //++10 for each
+        //++10 for each captured piece
         turn.score += turn.capturedPieces.size() * 10;
-        //++5 for capturing a king
-        boolean capturedKing = turn.capturedPieces.stream().filter(p -> p.info.isKing).collect(Collectors.toList()).size() > 0;
-        turn.score += capturedKing ? 5 : 0;
+        //++5 for each captured king
+        turn.score += turn.capturedPieces.stream().filter(p -> p.info.isKing).collect(Collectors.toList()).size() * 5;
         //++5 for becoming a king
         turn.score += turn.origin.info.isKing != turn.piece.info.isKing && turn.piece.info.isKing ? 5 : 0;
 
@@ -129,13 +135,13 @@ public class AITurn extends TurnHelpers{
             pTurns.forEach(t -> nextTurns.add(t));
         }
         for(Turn nextTurn : nextTurns){
-            int eval = turn.score + Minimax(nextTurn, aiDepth - 1, false,alpha, beta);
+            int eval = turn.score + Minimax(nextTurn, depth - 1, false,alpha, beta);
             value = Math.max(value, eval);
             alpha = Math.max(alpha, value);
             if(alpha >= beta){
                 break;
             }
-            System.out.println("Layer " + aiDepth + ";  Piece " + nextTurn.origin.getLocation() + ";   Score " + nextTurn.score);
+            System.out.println("MAX: Layer " + aiDepth + ";  Piece " + nextTurn.origin.getLocation() + ";   Score " + nextTurn.score);
         }
 
         //undo move otherwise it'd shuffle the board
