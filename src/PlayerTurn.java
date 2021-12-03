@@ -1,9 +1,7 @@
 import Classes.*;
-
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class PlayerTurn extends TurnHelpers {
@@ -18,14 +16,14 @@ public class PlayerTurn extends TurnHelpers {
     }
 
     private List<Piece> ForcedCapture() {
-        List<Piece> possibleJumps = GetPriorityPieces(Priority.High);
+        List<Piece> possibleJumps = GetPriorityPieces(Priority.High, isPlayerTurn);
         List<Piece> forcePieces = new ArrayList<Piece>();
         int score = 0;
         //go through each potential jump to see if it is a viable move
         for(Piece p : possibleJumps){
             if(!FilterMoves(p, p.possibleMoves, MoveType.Jump).isEmpty()){
                 possibleMoves = new ArrayList<Turn>();
-                possibleMoves = Search(turn.origin, p, MoveType.Jump, possibleMoves, null, false);
+                possibleMoves = Search(turn.origin, p, MoveType.Jump, possibleMoves, null, isPlayerTurn, false);
                 for(Turn t : possibleMoves){
                     if(t.capturedPieces.size() > score){
                         forcePieces = new ArrayList<Piece>(){};
@@ -57,7 +55,7 @@ public class PlayerTurn extends TurnHelpers {
         if(turn.origin.info.isPlayer && turn.origin.info.isActive) {
             turn.origin.isSelected = true;
             ui.UpdateColour(turn.origin);
-            possibleMoves = Search(turn.origin, turn.origin, MoveType.Both, possibleMoves, null, true);
+            possibleMoves = Search(turn.origin, turn.origin, MoveType.Both, possibleMoves, null, isPlayerTurn, true);
             for(Turn t : possibleMoves){
                 t.piece.isOption = true;
             }

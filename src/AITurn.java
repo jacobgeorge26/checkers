@@ -1,12 +1,6 @@
 import Classes.*;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class AITurn extends TurnHelpers{
@@ -21,10 +15,10 @@ public class AITurn extends TurnHelpers{
     public void MakeMove(){
         //get all possible turns
         List<Turn> allTurns = new ArrayList<>();
-        List<Piece> potentialTurns = GetPriorityPieces(Priority.Both);
+        List<Piece> potentialTurns = GetPriorityPieces(Priority.Both, isPlayerTurn);
         for(Piece p : potentialTurns){
             List<Turn> pTurns = new ArrayList<Turn>();
-            pTurns = Search(p, p, MoveType.Both, pTurns, null, false);
+            pTurns = Search(p, p, MoveType.Both, pTurns, null, isPlayerTurn, false);
             pTurns.forEach(t -> allTurns.add(t));
         }
 
@@ -76,13 +70,34 @@ public class AITurn extends TurnHelpers{
     }
 
     private int Min(Turn turn, int depth, int alpha, int beta) {
-        return -1;
-//            int eval = Minimax(turn, nextPiece, depth - 1, alpha, beta, MoveType.Neither);
-//            value = Math.min(value, eval);
-//            beta = Math.min(beta, value);
-//            if(beta <= alpha){
-//                break;
-//            }
+        int value = 10000;
+        List<Move> moves = DoMove(turn, false);
+        moves.forEach(m -> turn.changes.add(m));
+
+        //update score
+        //--5 for being vulnerable
+        //--10 for being captured
+
+        List<Turn> nextTurns = new ArrayList<>();
+        List<Piece> potentialTurns = GetPriorityPieces(Priority.Both, isPlayerTurn);
+        for(Piece p : potentialTurns){
+            List<Turn> pTurns = new ArrayList<Turn>();
+            pTurns = Search(p, p, MoveType.Both, pTurns, null, isPlayerTurn, false);
+            pTurns.forEach(t -> nextTurns.add(t));
+        }
+        for(Turn nextTurn : nextTurns){
+            int eval = turn.score + Minimax(nextTurn, aiDepth - 1, true,alpha, beta);
+            value = Math.min(value, eval);
+            beta = Math.min(beta, value);
+            if(beta <= alpha){
+                break;
+            }
+            System.out.println("Layer " + aiDepth + ";  Piece " + nextTurn.origin.getLocation() + ";   Score " + nextTurn.score);
+        }
+
+        //undo move otherwise it'd shuffle the board
+        UndoMove(turn);
+        return value;
 
     }
 
@@ -102,18 +117,29 @@ public class AITurn extends TurnHelpers{
         //++5 for becoming a king
         turn.score += turn.origin.info.isKing != turn.piece.info.isKing && turn.piece.info.isKing ? 5 : 0;
 
-        //TODO: Get all possible moves for the other player now that the move has been completed. test first.
-
-        int eval = Minimax(turn, depth - 1, true, alpha, beta);
-        value = Math.max(value, eval);
-        alpha = Math.max(alpha, value);
-        if(alpha >= beta){
-            UndoMove(turn);
-            return -turn.score;
+        if(turn.origin.getLocation() == 9 && turn.piece.getLocation() == 14){
+            System.out.println("here");
         }
-        
-        UndoMove(turn);
 
+        List<Turn> nextTurns = new ArrayList<>();
+        List<Piece> potentialTurns = GetPriorityPieces(Priority.Both, !isPlayerTurn);
+        for(Piece p : potentialTurns){
+            List<Turn> pTurns = new ArrayList<Turn>();
+            pTurns = Search(p, p, MoveType.Both, pTurns, null, !isPlayerTurn, false);
+            pTurns.forEach(t -> nextTurns.add(t));
+        }
+        for(Turn nextTurn : nextTurns){
+            int eval = turn.score + Minimax(nextTurn, aiDepth - 1, false,alpha, beta);
+            value = Math.max(value, eval);
+            alpha = Math.max(alpha, value);
+            if(alpha >= beta){
+                break;
+            }
+            System.out.println("Layer " + aiDepth + ";  Piece " + nextTurn.origin.getLocation() + ";   Score " + nextTurn.score);
+        }
+
+        //undo move otherwise it'd shuffle the board
+        UndoMove(turn);
         return value;
     }
 

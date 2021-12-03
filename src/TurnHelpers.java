@@ -1,6 +1,4 @@
 import Classes.*;
-
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -24,16 +22,16 @@ public class TurnHelpers {
         playerColour = _playerColour;
     }
 
-    protected List<Piece> GetPriorityPieces(Priority priority) {
+    protected List<Piece> GetPriorityPieces(Priority priority, boolean isPlayer) {
         List<Piece> priorityPieces = new ArrayList<>();
         for(Piece p : allPieces){
-            if(p == null || p.info.isPlayer != isPlayerTurn || !p.info.isActive){
+            if(p == null || p.info.isPlayer != isPlayer || !p.info.isActive){
                 continue;
             }
             for(Node n : p.possibleMoves){
                 Piece poss = allPieces[n.pieceLocation];
                 //pieces with a player piece adjacent
-                if(poss.info.isPlayer != isPlayerTurn && poss.info.isActive && !priorityPieces.contains(p) && priority != Priority.Low){
+                if(poss.info.isPlayer != isPlayer && poss.info.isActive && !priorityPieces.contains(p) && priority != Priority.Low){
                     priorityPieces.add(p);
                 }
                 //pieces with an empty space adjacent
@@ -68,7 +66,7 @@ public class TurnHelpers {
         return filteredMoves;
     }
 
-    public List<Turn> Search(Piece origin, Piece piece, MoveType legalMoveType, List<Turn> moves, Turn existingTurn, boolean updateColour) {
+    public List<Turn> Search(Piece origin, Piece piece, MoveType legalMoveType, List<Turn> moves, Turn existingTurn, boolean isPlayer, boolean updateColour) {
         if(legalMoveType == MoveType.Jump || legalMoveType == MoveType.Both){
             List<Node> jumpMoves = FilterMoves(piece, piece.possibleMoves, MoveType.Jump);
             for(Node nextNode : jumpMoves){
@@ -93,9 +91,11 @@ public class TurnHelpers {
                     newTurn.capturedPieces.add(capturedPiece);
 
                     //continue search
-                    nextPiece.info.isPlayer = isPlayerTurn;
-                    Search(origin, nextPiece, MoveType.Jump, moves, newTurn, updateColour);
-                    nextPiece.info.isPlayer = !isPlayerTurn;
+                    //i don't remember why i wrap this in the isPLayer/!isPlayer
+                    //but when I remove it something breaks
+                    nextPiece.info.isPlayer = isPlayer;
+                    Search(origin, nextPiece, MoveType.Jump, moves, newTurn, isPlayer, updateColour);
+                    nextPiece.info.isPlayer = !isPlayer;
                 }
             }
         }
@@ -140,25 +140,30 @@ public class TurnHelpers {
             //create move for fromPiece
             Move m = new Move(turn.origin);
             m.after = new Info(false, false, false);
+            turn.origin.info = m.after;
             changes.add(m);
             //create move for toPiece
             Move n = new Move(turn.piece);
             n.after = new Info(playerMove, true, turn.origin.info.isKing);
+            turn.piece.info = n.after;
             changes.add(n);
         }
         else if(turn.moveType == MoveType.Jump){
             //create move for fromPiece
             Move m = new Move(turn.origin);
             m.after = new Info(false, false, false);
+            turn.origin.info = m.after;
             changes.add(m);
             //create move for toPiece
             Move n = new Move(turn.piece);
             n.after = new Info(playerMove, true, turn.piece.info.isKing);
+            turn.piece.info = n.after;
             changes.add(n);
             //create move for captured piece
             for(Piece p : turn.capturedPieces){
                 Move c = new Move(p);
                 c.after = new Info(false, false, false);
+                p.info = c.after;
                 changes.add(c);
             }
         }

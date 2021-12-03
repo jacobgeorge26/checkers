@@ -1,12 +1,6 @@
 import Classes.*;
-
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.WindowEvent;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.ArrayList;
 
 public class Controller {
     private UI ui;
