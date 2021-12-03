@@ -9,16 +9,20 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public class UI implements ActionListener {
     private JFrame frame;
     public JPanel rootPanel;
-    private int gridSize;
-    private Piece[] pieces;
+    private final int gridSize;
+    private final Piece[] pieces;
     protected Controller controller;
     protected PieceColour playerColour;
     private JCheckBoxMenuItem[] aiDiffs = new JCheckBoxMenuItem[5];
     private JMenu reset;
+    private JMenu help;
     private JCheckBoxMenuItem[] forceCaptures = new JCheckBoxMenuItem[2];
     private JTextField messageBox;
 
@@ -69,12 +73,7 @@ public class UI implements ActionListener {
                     piece.info.isPlayer = false;
                 }
                 //setup event handler
-                pieceButton.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        controller.ClickPiece(piece);
-                    }
-                });
+                pieceButton.addActionListener(e -> controller.ClickPiece(piece));
 
                 piece.button = pieceButton;
                 UpdateColour(piece);
@@ -154,10 +153,16 @@ public class UI implements ActionListener {
         forcedCapture.add(on);
         forcedCapture.add(off);
 
+        help = new JMenu("Help");
+        help.setPreferredSize(new Dimension(100, 30));
+        JMenuItem rules = new JMenuItem("Game Rules");
+        rules.addActionListener(this);
+        help.add(rules);
 
         optionMenu.add(reset);
         optionMenu.add(aiDifficulty);
         optionMenu.add(forcedCapture);
+        optionMenu.add(help);
         frame.setJMenuBar(optionMenu);
     }
 
@@ -226,6 +231,7 @@ public class UI implements ActionListener {
         return pieces;
     }
 
+    //This can be refactored. V messy.
     @Override
     public void actionPerformed(ActionEvent e) {
         Object source = e.getSource();
@@ -333,6 +339,15 @@ public class UI implements ActionListener {
             forceCaptures[0].setState(false);
             forceCaptures[1].setState(true);
             controller.ToggleForceCapture(false);
+        }
+        //Help options
+        else if(source == help.getItem(0)){
+            //show rules
+            try {
+                Desktop.getDesktop().browse(new URI("https://a4games.company/checkers-rules-and-layout/"));
+            } catch (IOException | URISyntaxException e1) {
+                e1.printStackTrace();
+            }
         }
     }
 
