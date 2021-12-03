@@ -17,7 +17,7 @@ public class UI implements ActionListener {
     private Piece[] pieces;
     protected Controller controller;
     protected PieceColour playerColour;
-    private JCheckBoxMenuItem[] aiDiffs = new JCheckBoxMenuItem[3];
+    private JCheckBoxMenuItem[] aiDiffs = new JCheckBoxMenuItem[5];
     private JMenu reset;
     private JCheckBoxMenuItem[] forceCaptures = new JCheckBoxMenuItem[2];
     private JTextField messageBox;
@@ -109,7 +109,6 @@ public class UI implements ActionListener {
         ShowMessage(message + " Good luck!", Color.darkGray);
     }
 
-    //TODO: add expert option
     //TODO: add rules
     private void SetupOptions(JFrame frame) {
         JMenuBar optionMenu = new JMenuBar();
@@ -123,10 +122,16 @@ public class UI implements ActionListener {
         med.addActionListener(this);
         JCheckBoxMenuItem hard = new JCheckBoxMenuItem("Hard");
         hard.addActionListener(this);
-        aiDiffs = new JCheckBoxMenuItem[]{easy, med, hard};
+        JCheckBoxMenuItem expert = new JCheckBoxMenuItem("Expert");
+        expert.addActionListener(this);
+        JCheckBoxMenuItem god = new JCheckBoxMenuItem("God Tier");
+        god.addActionListener(this);
+        aiDiffs = new JCheckBoxMenuItem[]{easy, med, hard, expert, god};
         aiDifficulty.add(easy);
         aiDifficulty.add(med);
         aiDifficulty.add(hard);
+        aiDifficulty.add(expert);
+        aiDifficulty.add(god);
 
         //Reset game option
         reset = new JMenu("Reset");
@@ -231,6 +236,8 @@ public class UI implements ActionListener {
             aiDiffs[0].setState(true);
             aiDiffs[1].setState(false);
             aiDiffs[2].setState(false);
+            aiDiffs[3].setState(false);
+            aiDiffs[4].setState(false);
             controller.UpdateDifficulty(Difficulty.Easy);
         }
         else if(source == aiDiffs[1]){
@@ -238,6 +245,8 @@ public class UI implements ActionListener {
             aiDiffs[0].setState(false);
             aiDiffs[1].setState(true);
             aiDiffs[2].setState(false);
+            aiDiffs[3].setState(false);
+            aiDiffs[4].setState(false);
             controller.UpdateDifficulty(Difficulty.Medium);
         }
         else if(source == aiDiffs[2]){
@@ -245,7 +254,51 @@ public class UI implements ActionListener {
             aiDiffs[0].setState(false);
             aiDiffs[1].setState(false);
             aiDiffs[2].setState(true);
+            aiDiffs[3].setState(false);
+            aiDiffs[4].setState(false);
             controller.UpdateDifficulty(Difficulty.Hard);
+        }
+        else if(source == aiDiffs[3]){
+            //expert AI
+            int n = JOptionPane.showConfirmDialog(frame,
+                    "This will make the AI respond much more slowly. Continue?", "Slow Game Warning",
+                    JOptionPane.YES_NO_OPTION);
+            if(n == 0){
+                aiDiffs[0].setState(false);
+                aiDiffs[1].setState(false);
+                aiDiffs[2].setState(false);
+                aiDiffs[3].setState(true);
+                aiDiffs[4].setState(false);
+                controller.UpdateDifficulty(Difficulty.Expert);
+            }
+            else{
+                aiDiffs[3].setState(false);
+            }
+        }
+        else if(source == aiDiffs[4]){
+            //god AI
+            int n = JOptionPane.showConfirmDialog(frame,
+                    "This will make the AI respond much more slowly. Continue?", "Slow Game Warning",
+                    JOptionPane.YES_NO_OPTION);
+            if(n == 0){
+                int m = JOptionPane.showConfirmDialog(frame,
+                        "It is futile trying to beat this AI. Try anyway?", "Think you're up to the challenge?",
+                        JOptionPane.YES_NO_OPTION);
+                if(m == 0){
+                    aiDiffs[0].setState(false);
+                    aiDiffs[1].setState(false);
+                    aiDiffs[2].setState(false);
+                    aiDiffs[3].setState(false);
+                    aiDiffs[4].setState(true);
+                    controller.UpdateDifficulty(Difficulty.God);
+                }
+                else{
+                    aiDiffs[4].setState(false);
+                }
+            }
+            else{
+                aiDiffs[4].setState(false);
+            }
         }
         //Reset options
         else if(source == reset.getItem(0)){

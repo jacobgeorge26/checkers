@@ -101,17 +101,19 @@ public class GamePlay {
         aiDifficulty = diff;
         switch(aiDifficulty){
             case Easy:
-                AITurn.aiDepth = 1;
-                break;
-            case Medium:
                 AITurn.aiDepth = 2;
                 break;
-            case Hard:
+            case Medium:
                 AITurn.aiDepth = 3;
                 break;
-            case Expert:
-                //TODO: add warning that this will slow down the game
+            case Hard:
                 AITurn.aiDepth = 4;
+                break;
+            case Expert:
+                AITurn.aiDepth = 5;
+                break;
+            case God:
+                AITurn.aiDepth = 6;
                 break;
         }
     }

@@ -57,7 +57,8 @@ public class AITurn extends TurnHelpers{
     private double Minimax(Turn turn, int depth, boolean isMaximising, double alpha, double beta) {
         //TERMINAL NODE
         if (depth == 0) {
-            return turn.score;
+            //if score has max + min to 0 then return 1 - to show that it has found a score
+            return turn.score == 0 ? 1 : turn.score;
         }
         //MAX
         if (isMaximising) {
