@@ -6,7 +6,7 @@ public class Controller {
     private UI ui;
     private GamePlay game;
     public static void main(String[] args) {
-        new Controller(PieceColour.red, true, Difficulty.Easy);
+        new Controller();
     }
     private PieceColour defaultPlayerColour;
 
@@ -23,6 +23,23 @@ public class Controller {
         ui.InitialiseDifficulty(aiDifficulty);
         ui.InitialiseCapture(isForcedCapture);
     }
+
+    public Controller(){
+        defaultPlayerColour = PieceColour.red;
+        boolean defaultForcedCapture = true;
+        Difficulty defaultDifficulty = Difficulty.Medium;
+        //create board - setup pieces
+        //give game controller to UI (to create bridge to invoke event methods)
+        ui = new UI(defaultPlayerColour, this);
+        //create tree for game controller to search
+        Piece[] allPieces = ui.GetPieces();;
+        CreateTree(allPieces);
+        //create game
+        game = new GamePlay(ui, allPieces, defaultPlayerColour, defaultForcedCapture, defaultDifficulty);
+        ui.InitialiseDifficulty(defaultDifficulty);
+        ui.InitialiseCapture(defaultForcedCapture);
+    }
+
 
 
 

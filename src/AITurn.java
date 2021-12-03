@@ -99,7 +99,7 @@ public class AITurn extends TurnHelpers{
             if(beta <= alpha){
                 break;
             }
-            System.out.println("MIN: Layer " + aiDepth + ";  Piece " + nextTurn.origin.getLocation() + ";   Score " + nextTurn.score);
+            //System.out.println("MIN: Layer " + aiDepth + ";  Piece " + nextTurn.origin.getLocation() + ";   Score " + nextTurn.score);
         }
 
         //undo move otherwise it'd shuffle the board
@@ -141,7 +141,7 @@ public class AITurn extends TurnHelpers{
             if(alpha >= beta){
                 break;
             }
-            System.out.println("MAX: Layer " + aiDepth + ";  Piece " + nextTurn.origin.getLocation() + ";   Score " + nextTurn.score);
+            //System.out.println("MAX: Layer " + aiDepth + ";  Piece " + nextTurn.origin.getLocation() + ";   Score " + nextTurn.score);
         }
 
         //undo move otherwise it'd shuffle the board

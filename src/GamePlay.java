@@ -97,17 +97,20 @@ public class GamePlay {
 
 
 
-    //TODO: add other elements to difficulty options
     public void UpdateDifficulty(Difficulty diff) {
         aiDifficulty = diff;
         switch(aiDifficulty){
             case Easy:
-                AITurn.aiDepth = 2;
+                AITurn.aiDepth = 1;
                 break;
             case Medium:
-                AITurn.aiDepth = 3;
+                AITurn.aiDepth = 2;
                 break;
             case Hard:
+                AITurn.aiDepth = 3;
+                break;
+            case Expert:
+                //TODO: add warning that this will slow down the game
                 AITurn.aiDepth = 4;
                 break;
         }

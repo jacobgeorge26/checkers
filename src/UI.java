@@ -109,6 +109,8 @@ public class UI implements ActionListener {
         ShowMessage(message + " Good luck!", Color.darkGray);
     }
 
+    //TODO: add expert option
+    //TODO: add rules
     private void SetupOptions(JFrame frame) {
         JMenuBar optionMenu = new JMenuBar();
 
