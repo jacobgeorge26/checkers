@@ -1,8 +1,14 @@
 package Components;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
+
+/*
+* The foundations of this class were copied from:
+* https://www.javacodex.com/More-Examples/2/14
+* */
 
 public class RoundButton extends JButton {
 
@@ -17,6 +23,7 @@ public class RoundButton extends JButton {
         size.width = size.height = Math.max(size.width, size.height);
         setPreferredSize(size);
 
+
     /*
      This call causes the JButton not to paint the background.
      This allows us to paint a round background.
@@ -27,6 +34,8 @@ public class RoundButton extends JButton {
     public void SetColour(Color colour){
         setBackground(colour);
     }
+
+    public int GetSize(){return preferredSize().width;}
 
     protected void paintComponent(Graphics g) {
         if (getModel().isArmed()) {
@@ -40,7 +49,7 @@ public class RoundButton extends JButton {
     }
 
     protected void paintBorder(Graphics g) {
-        g.setColor(Color.darkGray);
+        g.setColor(Color.black);
         g.drawOval(0, 0, getSize().width - 1, getSize().height - 1);
     }
 

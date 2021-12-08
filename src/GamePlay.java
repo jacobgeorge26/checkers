@@ -1,17 +1,16 @@
 import Classes.*;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.awt.*;
 
 public class GamePlay {
-    public UI ui;
+    protected UI ui;
 
-    public Piece[] allPieces;
+    protected Controller controller;
 
-    private Difficulty aiDifficulty;
+    protected Piece[] allPieces;
+
+    protected boolean isForcedCapture;
+
+    protected Difficulty aiDifficulty;
 
     private TurnHelpers turnHelpers;
 
@@ -19,43 +18,85 @@ public class GamePlay {
 
     private AITurn aiTurn;
 
-    public GamePlay(UI _ui, Piece[] _allPieces) {
+    private PieceColour playerColour;
+
+    private boolean isPlayerTurn = false;
+
+    protected boolean isPaused = false;
+
+    public GamePlay(UI _ui, Piece[] _allPieces, PieceColour _playerColour, boolean _isForcedCapture, Difficulty _aiDifficulty) {
         ui = _ui;
         allPieces = _allPieces;
+        playerColour = _playerColour;
+        isForcedCapture = _isForcedCapture;
+        aiDifficulty = _aiDifficulty;
+        if(playerColour == PieceColour.white){
+            AI();
+        }
+        else{
+            isPlayerTurn = true;
+        }
     }
 
     public void pieceClicked(Piece piece) {
-        //SetupTest();
         //is it the player's turn?
-        if(playerTurn != null && !playerTurn.isPlayerTurn) {
-            //TODO: warning that it is not player's turn
+        if((playerTurn != null && !isPlayerTurn) || isPaused) {
+            ui.ShowMessage("The AI is thinking...", Color.darkGray);
             return;
         }
+
+
+
         //are they clicking the first button?
         if (playerTurn == null){
-            playerTurn = new PlayerTurn(ui, allPieces, piece);
+            //have they clicked one of their pieces?
+            if(!piece.info.isActive || !piece.info.isPlayer){
+                ui.ShowMessage("Select one of your pieces", Color.red);
+            }
+            else{
+                playerTurn = new PlayerTurn(ui, allPieces, this, playerColour, piece);
+                playerTurn.ShowOptions();
+            }
         }
         //piece has been clicked again, deselect
         else if(playerTurn.turn.origin != null && piece == playerTurn.turn.origin){
             playerTurn.RemoveSelection(piece);
-        }
-
-        //are they clicking the second button?
-        if(playerTurn != null && !piece.isActive()){
-            playerTurn.ChooseMove(piece);
             playerTurn = null;
-            aiTurn = new AITurn(ui, allPieces);
-            aiTurn.MakeMove();
         }
-        else{
-            //TODO: warning to select a non-active square
+        //are they clicking the second button?
+        else if(playerTurn != null){
+            //have they selected an empty square?
+            if(piece.info.isActive){
+                ui.ShowMessage("Select an empty square", Color.red);
+            }
+            //have they selected one of the valid moves?
+            else if(!piece.isOption)
+            {
+                ui.ShowMessage("That move is not possible. Select a valid move", Color.red);
+            }
+            //validation passed - complete the move!
+            else{
+                playerTurn.ChooseMove(piece);
+                playerTurn = null;
+                isPlayerTurn = !isPlayerTurn;
+                AI();
+            }
+        }
+    }
+
+
+    private void AI(){
+        if(!isPaused){
+            isPaused = true;
+            ui.ShowMessage("The AI is thinking...", Color.darkGray);
+            aiTurn = new AITurn(ui, allPieces, playerColour, this);
+            aiTurn.MakeMove();
+            isPlayerTurn = !isPlayerTurn;
         }
     }
 
 
 
-
-    //TODO: add other elements to difficulty options
     public void UpdateDifficulty(Difficulty diff) {
         aiDifficulty = diff;
         switch(aiDifficulty){
@@ -68,6 +109,18 @@ public class GamePlay {
             case Hard:
                 AITurn.aiDepth = 4;
                 break;
+            case Expert:
+                AITurn.aiDepth = 5;
+                break;
+            case God:
+                AITurn.aiDepth = 6;
+                break;
         }
+    }
+
+    //restart player's move
+    protected void RestartMove(Piece piece) {
+        playerTurn.RemoveSelection(piece);
+        playerTurn = null;
     }
 }

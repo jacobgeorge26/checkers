@@ -1,118 +1,164 @@
-import Classes.MoveType;
-import Classes.Node;
-import Classes.Piece;
-import Classes.Turn;
+import Classes.*;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class AITurn extends TurnHelpers{
 
-    protected static int aiDepth = 3;
+    protected static int aiDepth;
 
-    public AITurn(UI _ui, Piece[] _allPieces) {
-        super();
-        ui = _ui;
-        allPieces = _allPieces;
+    public AITurn(UI _ui, Piece[] _allPieces, PieceColour _playerColour, GamePlay _game) {
+        super(_ui, _allPieces, _game, _playerColour);
         isPlayerTurn = false;
     }
 
-    //for high - is it blocked?
-    //can it move in that direction - look at king
-    //would that move make it a king? bump score
-    //would that move make it vulnerable? reduce score
-    //is this piece about to be taken?
     public void MakeMove(){
-        //pieces with a player piece adjacent
-        List<Piece> highPriority = new ArrayList<>();
-        //pieces with an empty space adjacent
-        List<Piece> lowPriority = new ArrayList<>();
-        for(Piece p : allPieces){
-            if(p == null || p.isPlayer() || !p.isActive()){
-                continue;
-            }
-            for(Node n : p.possibleMoves){
-                Piece poss = allPieces[n.pieceLocation];
-                if(poss.isPlayer() && poss.isActive() && !highPriority.contains(p)){
-                    highPriority.add(p);
-                }
-                if(!poss.isActive() && !lowPriority.contains(p)){
-                    lowPriority.add(p);
-                }
-            }
+        //get all possible turns
+        List<Turn> allTurns = new ArrayList<>();
+        //if forced capture is on then only look at the pieces that have a capture available
+        List<Piece> forcePieces = game.isForcedCapture ? ForcedCapture(isPlayerTurn) : new ArrayList<>();
+        //only look at pieces that have a potential move - less expensive
+        List<Piece> potentialTurns = forcePieces.isEmpty() ? GetPriorityPieces(Priority.Both, isPlayerTurn) : forcePieces;
+        for(Piece p : potentialTurns){
+            List<Turn> pTurns = new ArrayList<Turn>();
+            pTurns = Search(p, p, MoveType.Both, pTurns, null, isPlayerTurn, false);
+            pTurns.forEach(t -> allTurns.add(t));
         }
 
+        //for each potential turn, run MINIMAX to explore its score. Run the best scoring move
         Turn bestTurn = null;
-        for(Piece p : highPriority){
-            Turn turn = new Turn(p);
-            turn.score = Minimax(turn, p, aiDepth, false, MoveType.Both);
+        for(Turn turn : allTurns){
+            turn.score = Minimax(turn, aiDepth, true,Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
             bestTurn = bestTurn == null || turn.score > bestTurn.score ? turn : bestTurn;
-            System.out.println("Piece " + p.getLocation() + " has score " + turn.score);
-        }
-        if(bestTurn == null || bestTurn.score < 2){
-            for(Piece p : lowPriority){
-                Turn turn = new Turn(p);
-                turn.score = Minimax(turn, p, aiDepth, false, MoveType.Both);
-                bestTurn = bestTurn == null || turn.score > bestTurn.score ? turn : bestTurn;
-                System.out.println("Piece " + p.getLocation() + " has score " + turn.score);
-            }
+            System.out.println("Piece " + turn.origin.getLocation() + " has score " + turn.score);
         }
         if(bestTurn == null || bestTurn.score == 0){
-            //TODO: warning - no turns possible - switch player
-        }
-
-        System.out.println("MOVING piece " + bestTurn.origin.getLocation() + " to piece " + bestTurn.piece.getLocation());
-        CompleteTurn(bestTurn);
-    }
-
-
-    private int Minimax(Turn turn, Piece piece, int depth, boolean isMin, MoveType moveType) {
-        //if allowed, get possible advancing moves
-        List<Node> unexploredA = (moveType == MoveType.Advance || moveType == MoveType.Both)
-                ? FilterMoves(piece, piece.possibleMoves, MoveType.Advance) : new ArrayList<Node>();
-        //remove those already explored - for advance only as jumps can return to the same place
-        unexploredA.removeIf(n -> turn.explored.contains(n.pieceLocation));
-        //if allowed, get possible jumping moves
-        List<Node> unexploredJ = (moveType == MoveType.Jump || moveType == MoveType.Both)
-                ? FilterMoves(piece, piece.possibleMoves, MoveType.Jump) : new ArrayList<Node>();
-
-        turn.explored.add(piece.getLocation());
-        if (depth == 0 || (unexploredA.isEmpty() && unexploredJ.isEmpty())){
-            turn.piece = piece;
-            return turn.capturedPieces.isEmpty()
-                    ? moveType == MoveType.Both ? 0 : 1
-                    : turn.capturedPieces.size();
-        }
-
-        int bestValue;
-        if (isMin || unexploredJ.isEmpty()){
-            bestValue = -1000;
-            for (int i = 0; i < unexploredA.size(); i++){
-                Piece nextPiece = allPieces[unexploredA.get(i).pieceLocation];
-                int eval = Minimax(turn, nextPiece, depth - 1, !isMin, MoveType.Neither);
-                bestValue = Math.max(bestValue, eval);
-            }
+            isPlayerTurn = !isPlayerTurn;
+            GameOver("All pieces are trapped");
         }
         else{
-            bestValue = 1000;
-            for(int i = 0; i < unexploredJ.size(); i++){
-                Node nextNode = unexploredJ.get(i);
-                Piece nextPiece = allPieces[nextNode.pieceLocation];
-                Optional<Node> capturedNode = piece.possibleMoves.stream()
-                        .filter(p -> p.direction == nextNode.direction).findFirst();
-                if(!capturedNode.isPresent()){
-                    //TODO: error
-                }
-                else{
-                    turn.capturedPieces.add(allPieces[capturedNode.get().pieceLocation]);
-                    int eval = Minimax(turn, nextPiece, depth - 1, !isMin, MoveType.Jump);
-                    bestValue = Math.min(bestValue, eval);
-                }
+            System.out.println("MOVING piece " + bestTurn.origin.getLocation() + " to piece " + bestTurn.piece.getLocation());
+            Turn finalBestTurn = bestTurn;
+            new java.util.Timer().schedule(
+                    new java.util.TimerTask() {
+                        @Override
+                        public void run() {
+                            CompleteTurn(finalBestTurn);
+                            game.isPaused = false;
+                        }
+                    },
+                    1500
+            );
+
+        }
+    }
+
+
+    private double Minimax(Turn turn, int depth, boolean isMaximising, double alpha, double beta) {
+        //TERMINAL NODE
+        if (depth == 0) {
+            //if score has max + min to 0 then return 1 - to show that it has found a score
+            return turn.score == 0 ? 1 : turn.score;
+        }
+        //MAX
+        if (isMaximising) {
+            return Max(turn, depth, alpha, beta);
+        }
+        //MIN
+        else if (!isMaximising) {
+            return Min(turn, depth, alpha, beta);
+        }
+        else{
+            ui.ShowMessage("There has been an error in AITurn/MiniMax. The code has failed to meet the conditions for either min or max.", Color.red);
+            return 0;
+        }
+    }
+
+    private double Min(Turn turn, int depth, double alpha, double beta) {
+        double value = Double.POSITIVE_INFINITY;
+        List<Move> moves = DoMove(turn, false);
+        moves.forEach(m -> turn.changes.add(m));
+
+        //update score
+        //--10 for each captured piece
+        turn.score -= turn.capturedPieces.size() * 10;
+        //--5 for each captured king
+        turn.score -= turn.capturedPieces.stream().filter(p -> p.info.isKing).collect(Collectors.toList()).size() * 5;
+        //--5 for becoming a king
+        turn.score -= turn.origin.info.isKing != turn.piece.info.isKing && turn.piece.info.isKing ? 5 : 0;
+
+        List<Turn> nextTurns = new ArrayList<>();
+        //if forced capture is on then only look at the pieces that have a capture available
+        List<Piece> forcePieces = game.isForcedCapture ? ForcedCapture(!isPlayerTurn) : new ArrayList<>();
+        //only look at pieces that have a potential move - less expensive
+        List<Piece> potentialTurns = forcePieces.isEmpty() ? GetPriorityPieces(Priority.Both, !isPlayerTurn) : forcePieces;
+        for(Piece p : potentialTurns){
+            List<Turn> pTurns = new ArrayList<Turn>();
+            pTurns = Search(p, p, MoveType.Both, pTurns, null, !isPlayerTurn, false);
+            pTurns.forEach(t -> nextTurns.add(t));
+        }
+        for(Turn nextTurn : nextTurns){
+            //get the score for this branch (depending on depth it may branch in the next search too - will return best branch)
+            double eval = turn.score + Minimax(nextTurn, depth - 1, true, alpha, beta);
+            //return the move that the player would make - as it advantages them the most
+            value = Math.min(value, eval);
+            //alpha-beta pruning
+            //if this branch is already known to disadvantage the player then don't bother looking at the rest of it
+            beta = Math.min(beta, value);
+            if(beta <= alpha){
+                break;
             }
         }
-        return bestValue;
+
+        //undo move otherwise it'd shuffle the board
+        UndoMove(turn);
+        return value;
 
     }
+
+    private double Max(Turn turn, int depth, double alpha, double beta) {
+        double value = Double.NEGATIVE_INFINITY;
+        List<Move> moves = DoMove(turn, false);
+        moves.forEach(m -> turn.changes.add(m));
+
+        //update score
+        //++5 for moving forward
+        turn.score += turn.moveType == MoveType.Advance ? 5 : 0;
+        //++10 for each captured piece
+        turn.score += turn.capturedPieces.size() * 10;
+        //++5 for each captured king
+        turn.score += turn.capturedPieces.stream().filter(p -> p.info.isKing).collect(Collectors.toList()).size() * 5;
+        //++5 for becoming a king
+        turn.score += turn.origin.info.isKing != turn.piece.info.isKing && turn.piece.info.isKing ? 5 : 0;
+
+        List<Turn> nextTurns = new ArrayList<>();
+        //if forced capture is on then only look at the pieces that have a capture available
+        List<Piece> forcePieces = game.isForcedCapture ? ForcedCapture(isPlayerTurn) : new ArrayList<>();
+        //only look at pieces that have a potential move - less expensive
+        List<Piece> potentialTurns = forcePieces.isEmpty() ? GetPriorityPieces(Priority.Both, isPlayerTurn) : forcePieces;
+        for(Piece p : potentialTurns){
+            List<Turn> pTurns = new ArrayList<Turn>();
+            pTurns = Search(p, p, MoveType.Both, pTurns, null, isPlayerTurn, false);
+            pTurns.forEach(t -> nextTurns.add(t));
+        }
+        for(Turn nextTurn : nextTurns){
+            //get the score for this branch (depending on depth it may branch in the next search too - will return best branch)
+            double eval = turn.score + Minimax(nextTurn, depth - 1, false,alpha, beta);
+            //return the move that the AI would make - as it advantages them the most
+            value = Math.max(value, eval);
+            //alpha-beta pruning
+            //if this branch is already known to disadvantage the AI then don't bother looking at the rest of it
+            alpha = Math.max(alpha, value);
+            if(alpha >= beta){
+                break;
+            }
+        }
+        //undo move otherwise it'd shuffle the board
+        UndoMove(turn);
+        return value;
+    }
+
 
 }

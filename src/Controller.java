@@ -1,36 +1,53 @@
-import Classes.Direction;
-import Classes.Node;
-import Classes.Piece;
-
-import java.awt.*;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.ArrayList;
+import Classes.*;
+import javax.swing.*;
+import java.awt.event.WindowEvent;
 
 public class Controller {
+    private UI ui;
     private GamePlay game;
     public static void main(String[] args) {
         new Controller();
     }
+    private PieceColour defaultPlayerColour;
 
-    public Controller() {
+    public Controller(PieceColour _playerColour, boolean isForcedCapture, Difficulty aiDifficulty) {
+        defaultPlayerColour = _playerColour;
         //create board - setup pieces
-        UI checkers = new UI();
-        //create game
-        game = new GamePlay(checkers, checkers.GetPieces());
-        //give game controller to UI (to invoke event method)
-        checkers.game = game;
+        //give game controller to UI (to create bridge to invoke event methods)
+        ui = new UI(defaultPlayerColour, this);
         //create tree for game controller to search
-        CreateTree();
+        Piece[] allPieces = ui.GetPieces();;
+        CreateTree(allPieces);
+        //create game
+        game = new GamePlay(ui, allPieces, defaultPlayerColour, isForcedCapture, aiDifficulty);
+        ui.InitialiseDifficulty(aiDifficulty);
+        ui.InitialiseCapture(isForcedCapture);
+    }
+
+    public Controller(){
+        defaultPlayerColour = PieceColour.red;
+        boolean defaultForcedCapture = true;
+        Difficulty defaultDifficulty = Difficulty.Medium;
+        //create board - setup pieces
+        //give game controller to UI (to create bridge to invoke event methods)
+        ui = new UI(defaultPlayerColour, this);
+        //create tree for game controller to search
+        Piece[] allPieces = ui.GetPieces();;
+        CreateTree(allPieces);
+        //create game
+        game = new GamePlay(ui, allPieces, defaultPlayerColour, defaultForcedCapture, defaultDifficulty);
+        ui.InitialiseDifficulty(defaultDifficulty);
+        ui.InitialiseCapture(defaultForcedCapture);
     }
 
 
 
 
 
-    private void CreateTree() {
-        for(int i = 1; i < game.allPieces.length; i++){
-            Piece p = game.allPieces[i];
+
+    private void CreateTree(Piece[] pieces) {
+        for(int i = 1; i < pieces.length; i++){
+            Piece p = pieces[i];
             int loc = p.getLocation();
             int x = p.getCol(), y = p.getRow(), g = p.getGridSize();
             int[] indexes = y % 2 == 0 ? new int[]{-5, -4, 3, 4} : new int[]{-4, -3, 4, 5};
@@ -42,4 +59,29 @@ public class Controller {
     }
 
 
+    protected void ClickPiece(Piece piece) {
+        game.pieceClicked(piece);
+    }
+
+    public void UpdateDifficulty(Difficulty diff) {
+        game.UpdateDifficulty(diff);
+    }
+
+    public void ResetGame(PieceColour playerColour) {
+        new Controller(playerColour, game.isForcedCapture, game.aiDifficulty);
+        JFrame currentFrame = ui.GetFrame();
+        currentFrame.dispatchEvent(new WindowEvent(currentFrame, WindowEvent.WINDOW_CLOSING));
+    }
+
+    public void ToggleForceCapture(boolean isForcedCapture) {
+        game.isForcedCapture = isForcedCapture;
+    }
+
+    public void CloseGame() {
+        /*
+        The code for closing a JFrame is from https://stackoverflow.com/questions/1234912/how-to-programmatically-close-a-jframe/1235994
+        */
+        JFrame currentFrame = ui.GetFrame();
+        currentFrame.dispatchEvent(new WindowEvent(currentFrame, WindowEvent.WINDOW_CLOSING));
+    }
 }

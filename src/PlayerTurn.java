@@ -1,11 +1,7 @@
-import Classes.MoveType;
-import Classes.Node;
-import Classes.Piece;
-import Classes.Turn;
-
+import Classes.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class PlayerTurn extends TurnHelpers {
@@ -13,74 +9,47 @@ public class PlayerTurn extends TurnHelpers {
 
     private List<Turn> possibleMoves;
 
-    public PlayerTurn(UI _ui, Piece[] _allPieces, Piece _origin) {
-        super();
-        ui = _ui;
-        allPieces = _allPieces;
+    public PlayerTurn(UI _ui, Piece[] _allPieces, GamePlay _game, PieceColour _playerColour, Piece _origin) {
+        super(_ui, _allPieces, _game, _playerColour);
         turn = new Turn(_origin);
         isPlayerTurn = true;
-        ShowOptions();
     }
 
-    public void ShowOptions(){
+    protected void ShowOptions(){
+        //if forced capture then check for any pieces that need to capture
+        if(game.isForcedCapture){
+            List<Piece> forcePieces = ForcedCapture(isPlayerTurn);
+            if(!forcePieces.isEmpty() && !forcePieces.contains(turn.origin)){
+                ui.ShowMessage("Forced capture is turned on and there is a possible capture", Color.orange);
+                game.RestartMove(turn.origin);
+                return;
+            }
+        }
+
         possibleMoves = new ArrayList<Turn>();
-        if(turn.origin.isPlayer() && turn.origin.isActive()) {
+        if(turn.origin.info.isPlayer && turn.origin.info.isActive) {
             turn.origin.isSelected = true;
             ui.UpdateColour(turn.origin);
-            Search(turn.origin, MoveType.Both, possibleMoves, null);
+            possibleMoves = Search(turn.origin, turn.origin, MoveType.Both, possibleMoves, null, isPlayerTurn, true);
             for(Turn t : possibleMoves){
                 t.piece.isOption = true;
             }
-        }
-        else{
-            //TODO: warning to select a valid player's piece
+            if(possibleMoves.size() == 0){
+                ui.ShowMessage("This piece is trapped - no moves possible", Color.orange);
+            }
         }
     }
 
-    //TODO: what if it reaches the edge and becomes a king halfway through?
-    public List<Turn> Search(Piece piece, MoveType legalMoveType, List<Turn> moves, Turn existingTurn) {
-        if(legalMoveType == MoveType.Jump || legalMoveType == MoveType.Both){
-            List<Node> jumpMoves = FilterMoves(piece, piece.possibleMoves, MoveType.Jump);
-            for(Node nextNode : jumpMoves){
-                Turn newTurn = existingTurn == null ? new Turn(turn.origin) : existingTurn;
-                Piece nextPiece = allPieces[nextNode.pieceLocation];
-                if(nextPiece != turn.origin){ //TODO: this is technically allowed - code for this situation
-                    nextPiece.isOption = true;
-                    ui.UpdateColour(nextPiece);
-
-                    moves.add(newTurn);
-                    newTurn = moves.get(moves.size() - 1); //get the duplicate
-                    newTurn.piece = nextPiece;
-                    Optional<Node> capturedNode = piece.possibleMoves.stream()
-                            .filter(p -> p.direction == nextNode.direction).findFirst();
-                    newTurn.capturedPieces.add(allPieces[capturedNode.get().pieceLocation]);
-
-                    Search(nextPiece, MoveType.Jump, moves, newTurn);
-                }
-            }
-        }
-        if(legalMoveType == MoveType.Advance || legalMoveType == MoveType.Both){
-            List<Node> advanceMoves = FilterMoves(piece, piece.possibleMoves, MoveType.Advance);
-            for (Node nextNode : advanceMoves){
-                Piece nextPiece = allPieces[nextNode.pieceLocation];
-                if(nextPiece != turn.origin){
-                    Turn newTurn = new Turn(turn.origin);
-                    newTurn.piece = nextPiece;
-                    moves.add(newTurn);
-                    nextPiece.isOption = true;
-                    ui.UpdateColour(nextPiece);
-                }
-            }
-        }
-        return moves;
-    }
 
     public void RemoveSelection(Piece piece) {
         //clear options
-        for(Turn t : possibleMoves){
-            t.piece.isOption = false;
-            ui.UpdateColour(t.piece);
+        if(possibleMoves != null){
+            for(Turn t : possibleMoves){
+                t.piece.isOption = false;
+                ui.UpdateColour(t.piece);
+            }
         }
+
         //clear selection
         ClearSelectedPiece(turn);
         ClearOptions(possibleMoves);
@@ -89,9 +58,9 @@ public class PlayerTurn extends TurnHelpers {
     public void ChooseMove(Piece piece) {
         List<Turn> matchingTurns = possibleMoves.stream().filter(t -> t.piece.getLocation() == piece.getLocation()).collect(Collectors.toList());
         //no matching turns
-        if(matchingTurns.size() == 0){//TODO: warning that this move in invalid
+        if(matchingTurns.size() == 0){
+            ui.ShowMessage("This is not a valid move", Color.orange);
             ClearSelectedPiece(turn);
-            ClearOptions(possibleMoves);
         }
         else {
             turn = matchingTurns.get(0);
@@ -100,7 +69,7 @@ public class PlayerTurn extends TurnHelpers {
                 turn = t.capturedPieces.size() > turn.capturedPieces.size() ? t : turn;
             }
             CompleteTurn(turn);
-            ClearOptions(possibleMoves);
         }
+        ClearOptions(possibleMoves);
     }
 }
