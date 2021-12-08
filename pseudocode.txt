@@ -1,0 +1,129 @@
+Minimax (turn, depth, isMaximising)
+	IF depth = 0
+		RETURN turn.score 
+		//will return 1 as a default to show that this turn has been explored
+	IF isMaximising
+		RETURN MAX(turn, depth)
+	ELSE
+		RETURN MIN(turn, depth)
+		
+MAX(turn, depth)
+	//determines what the best move for the AI is
+	value ← -∞
+	DoMove()
+	UpdateScore()
+	FOR(nextTurn in possibleTurns)
+		eval ← turn.score + Minimax(nextTurn, depth - 1, false)
+		//switch to a minimising move for the next turn
+		value ← max(value, eval)
+	UndoMove()
+	RETURN value
+	
+MIN(turn, depth)
+	//determines the best move that the player will respond with
+	value ← ∞
+	DoMove()
+	UpdateScore()
+	FOR(nextTurn in possibleTurns)
+		eval ← turn.score + Minimax(nextTurn, depth - 1, true)
+		//switch to a maximising move for the next turn
+		value ← min(value, eval)
+	UndoMove()
+	RETURN value
+	
+	
+	
+Search(origin, piece, moves, existingTurn)
+	//origin is the piece the search was initiated from
+	//piece is where the search is currently exploring (e.g. for multi-leg jumps)
+	possibleJumpMoves ← list of jump moves from piece
+	possibleAdvanceMoves ← list of advance moves from piece
+	FOR(nextNode in possibleJumpMoves)
+		nextPiece ← getPieceFromNode(nextNode)
+		//add this turn to the list of moves being collected
+		newTurn ← existingTurn.Clone() or new empty turn
+		newTurn.capturedPiece ← getCapturedPiece()
+		nextPiece.isKing ← isKingNow(nextPiece) || piece.isKing || capturedPiece.isKing
+		//update the isKing value for future iterations of search
+		newTurn.origin ← origin
+		newTurn.piece ← nextPiece
+		moves.add(newTurn)
+		//continue search to look for multi-leg jumps
+		Search(origin, nextPiece, moves, newTurn)
+	FOR(nextNode in possibleAdvanceMoves)
+		nextPiece ← getPieceFromNode(nextNode)
+		//add this turn to the list of moves being collected
+		newTurn ← existingTurn.Clone() or new empty turn
+		newTurn.origin ← origin
+		newTurn.piece ← nextPiece
+		moves.add(newTurn)
+		//advance is a single move, no need to search further
+	RETURN moves
+	
+AIMove()
+	potentialTurns ← GetPriorityPieces()
+	allTurns ← empty list of turns
+	FOR(piece in potentialTurns)
+		viableTurns ← SEARCH(piece, piece, null, null)
+		viableTurns.FOREACH(t -> allTurns.add(t)
+	bestTurn ← null
+	FOR(turn in allTurns)
+		//can now iterate through all possible turns that AI can currently make
+		alpha ← -∞
+		beta ← ∞
+		turn.score ← Minimax(turn, depth, true, alpha, beta)
+		//depth will already be established from the player's settings choice
+		bestTurn ← bestScore(bestScore, turn)
+	DoMove(bestTurn)	
+	
+Minimax (turn, depth, isMaximising, alpha, beta)
+	IF depth = 0
+		RETURN turn.score 
+		//will return 1 as a default to show that this turn has been explored
+	IF isMaximising
+		RETURN MAX(turn, depth)
+	ELSE
+		RETURN MIN(turn, depth)
+		
+MAX(turn, depth, alpha, beta)
+	//determines what the best move for the AI is
+	value ← -∞
+	DoMove()
+	UpdateScore()
+	FOR(nextTurn in possibleTurns)
+		eval ← turn.score + Minimax(nextTurn, depth - 1, false, alpha, beta)
+		//switch to a minimising move for the next turn
+		value ← max(value, eval)
+		alpha ← max(alpha, value)
+		IF(alpha >= beta)
+			BREAK
+			//prune branch here, no point continuing exploring this turn
+	UndoMove()
+	RETURN value
+	
+MIN(turn, depth, alpha, beta)
+	//determines the best move that the player will respond with
+	value ← ∞
+	DoMove()
+	UpdateScore()
+	FOR(nextTurn in possibleTurns)
+		eval ← turn.score + Minimax(nextTurn, depth - 1, true, alpha, beta)
+		//switch to a maximising move for the next turn
+		value ← min(value, eval)
+		beta ← min(beta, value)
+		IF(beta <= alpha)
+			BREAK//prune branch here, no point continuing exploring this turn
+	UndoMove()
+	RETURN value
+		
+		
+ForcedCapture()
+	potentialJumps ← GetPriorityPieces()
+	forcePieces ← empty list of Pieces
+	score ← 0
+	FOR(piece in potentialJumps)
+		filteredMoves ← FilterMoves(piece) 
+		//this is a list of the actual moves available to this piece
+		IF(filteredMoves IS NOT EMPTY)
+			possibleMoves ← 
+		

@@ -5,6 +5,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 
+/*
+* The foundations of this class were copied from:
+* https://www.javacodex.com/More-Examples/2/14
+* */
+
 public class RoundButton extends JButton {
 
     public RoundButton() {

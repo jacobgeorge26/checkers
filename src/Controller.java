@@ -78,6 +78,9 @@ public class Controller {
     }
 
     public void CloseGame() {
+        /*
+        The code for closing a JFrame is from https://stackoverflow.com/questions/1234912/how-to-programmatically-close-a-jframe/1235994
+        */
         JFrame currentFrame = ui.GetFrame();
         currentFrame.dispatchEvent(new WindowEvent(currentFrame, WindowEvent.WINDOW_CLOSING));
     }

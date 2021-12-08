@@ -45,6 +45,9 @@ public class UI implements ActionListener {
         rootPanel.add(messageBox);
 
         //setup board
+        /*
+        * The idea for this JPanel grid setup is from https://jvm-gaming.org/t/creating-a-gui-for-a-board-game/30808/2
+        */
         JPanel panel = new JPanel(new GridLayout(gridSize, gridSize));
         boolean colour = true;
         for (int index = 0; index < gridSize * gridSize; index++) {
@@ -214,7 +217,13 @@ public class UI implements ActionListener {
     private void DisplayKingIcon(Piece piece) {
         if(piece.info.isKing && !piece.isOption){
             try{
+                /*
+                * This icon was copied from https://www.vectorstock.com/royalty-free-vector/crown-king-icon-on-white-background-vector-4424984
+                */
                 Image img = ImageIO.read(getClass().getResource("king.png"));
+                /*
+                * The code to resize an icon was taken from https://stackoverflow.com/questions/2856480/resizing-a-imageicon-in-a-jbutton
+                */
                 Image newimg = img.getScaledInstance( piece.button.GetSize() / 2, piece.button.GetSize() / 2,  java.awt.Image.SCALE_SMOOTH ) ;
                 piece.button.setIcon(new ImageIcon(newimg));
             }
@@ -343,6 +352,9 @@ public class UI implements ActionListener {
         //Help options
         else if(source == help.getItem(0)){
             //show rules
+            /*
+            * The code to launch a URl is from https://www.codejava.net/java-se/swing/how-to-create-hyperlink-with-jlabel-in-java-swing
+            */
             try {
                 Desktop.getDesktop().browse(new URI("https://a4games.company/checkers-rules-and-layout/"));
             } catch (IOException | URISyntaxException e1) {
@@ -378,6 +390,9 @@ public class UI implements ActionListener {
     }
 
     protected void GameOverDialog(String message){
+        /*
+        * The code for dialog boxes is from https://docs.oracle.com/javase/tutorial/uiswing/components/dialog.html
+        */
         int n = JOptionPane.showConfirmDialog(frame,
                 message + " Play again?", "Game Over",
                 JOptionPane.YES_NO_OPTION);
